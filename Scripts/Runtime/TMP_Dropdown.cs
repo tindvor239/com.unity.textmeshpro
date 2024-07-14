@@ -815,13 +815,7 @@ namespace TMPro
                 if (item == null)
                     continue;
 
-                // Automatically set up a toggle state change listener
-                item.toggle.isOn = value == i;
-                item.toggle.onValueChanged.AddListener(x => OnSelectItem(item.toggle));
-
-                // Select current option
-                if (item.toggle.isOn)
-                    item.toggle.Select();
+                SetupToggle(item.toggle);
 
                 // Automatically set up explicit navigation
                 if (prev != null)
@@ -920,6 +914,17 @@ namespace TMPro
                 m_Blocker = null;
                 Select();
             }
+        }
+
+        protected virtual SetupToggle(Toggle toggle, int index)
+        {
+            // Automatically set up a toggle state change listener
+            toggle.isOn = value == index;
+            toggle.onValueChanged.AddListener(x => OnSelectItem(toggle));
+
+            // Select current option
+            if (toggle.isOn)
+                toggle.Select();
         }
 
         // Change the value and hide the dropdown.
