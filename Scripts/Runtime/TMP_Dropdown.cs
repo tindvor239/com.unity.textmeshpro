@@ -734,6 +734,29 @@ namespace TMPro
             return comp;
         }
 
+        private static bool IsEverythingValue(int count, int value)
+        {
+            var result = true;
+            for (var i = 0; i < count; i++)
+            {
+                if ((value & 1 << i) == 0)
+                    result = false;
+            }
+
+            return result;
+        }
+
+        private static int EverythingValue(int count)
+        {
+            int result = 0;
+            for (var i = 0; i < count; i++)
+            {
+                result |= 1 << i;
+            }
+
+            return result;
+        }
+
         /// <summary>
         /// Handling for when the dropdown is initially 'clicked'. Typically shows the dropdown
         /// </summary>
@@ -974,27 +997,28 @@ namespace TMPro
             m_Blocker = CreateBlocker(rootCanvas);
         }
 
-        static bool IsEverythingValue(int count, int value)
+        /// <summary>
+        /// Hide the dropdown list. I.e. close it.
+        /// </summary>
+        public void Hide()
         {
-            var result = true;
-            for (var i = 0; i < count; i++)
+            if (m_Coroutine == null)
             {
-                if ((value & 1 << i) == 0)
-                    result = false;
+                if (m_Dropdown != null)
+                {
+                    AlphaFadeList(m_AlphaFadeSpeed, 0f);
+
+                    // User could have disabled the dropdown during the OnValueChanged call.
+                    if (IsActive())
+                        m_Coroutine = StartCoroutine(DelayedDestroyDropdownList(m_AlphaFadeSpeed));
+                }
+
+                if (m_Blocker != null)
+                    DestroyBlocker(m_Blocker);
+
+                m_Blocker = null;
+                Select();
             }
-
-            return result;
-        }
-
-        static int EverythingValue(int count)
-        {
-            int result = 0;
-            for (var i = 0; i < count; i++)
-            {
-                result |= 1 << i;
-            }
-
-            return result;
         }
 
         /// <summary>
@@ -1065,6 +1089,73 @@ namespace TMPro
             blockerButton.onClick.AddListener(Hide);
 
             return blocker;
+        }
+
+        // Change the value and hide the dropdown.
+        protected virtual void OnSelectItem(Toggle toggle)
+        {
+            int selectedIndex = -1;
+            Transform tr = toggle.transform;
+            Transform parent = tr.parent;
+            for (int i = 1; i < parent.childCount; i++)
+            {
+                if (parent.GetChild(i) == tr)
+                {
+                    // Subtract one to account for template child.
+                    selectedIndex = i - 1;
+                    break;
+                }
+            }
+
+            if (selectedIndex < 0)
+                return;
+
+            if (m_MultiSelect)
+            {
+                switch (selectedIndex)
+                {
+                    case 0: // Nothing
+                        value = 0;
+                        for (var i = 3; i < parent.childCount; i++)
+                        {
+                            var toggleComponent = parent.GetChild(i).GetComponentInChildren<Toggle>();
+                            if (toggleComponent)
+                                toggleComponent.SetIsOnWithoutNotify(false);
+                        }
+
+                        toggle.isOn = true;
+                        break;
+                    case 1: // Everything
+                        value = EverythingValue(options.Count);
+                        for (var i = 3; i < parent.childCount; i++)
+                        {
+                            var toggleComponent = parent.GetChild(i).GetComponentInChildren<Toggle>();
+                            if (toggleComponent)
+                                toggleComponent.SetIsOnWithoutNotify(i > 2);
+                        }
+                        break;
+                    default:
+                        var flagValue = 1 << (selectedIndex - 2);
+                        var wasSelected = (value & flagValue) != 0;
+                        toggle.SetIsOnWithoutNotify(!wasSelected);
+
+                        if (wasSelected)
+                            value &= ~flagValue;
+                        else
+                            value |= flagValue;
+
+                        break;
+                }
+            }
+            else
+            {
+                if (!toggle.isOn)
+                    toggle.SetIsOnWithoutNotify(true);
+
+                value = selectedIndex;
+            }
+
+            Hide();
         }
 
         /// <summary>
@@ -1184,30 +1275,6 @@ namespace TMPro
             group.alpha = alpha;
         }
 
-        /// <summary>
-        /// Hide the dropdown list. I.e. close it.
-        /// </summary>
-        public void Hide()
-        {
-            if (m_Coroutine == null)
-            {
-                if (m_Dropdown != null)
-                {
-                    AlphaFadeList(m_AlphaFadeSpeed, 0f);
-
-                    // User could have disabled the dropdown during the OnValueChanged call.
-                    if (IsActive())
-                        m_Coroutine = StartCoroutine(DelayedDestroyDropdownList(m_AlphaFadeSpeed));
-                }
-
-                if (m_Blocker != null)
-                    DestroyBlocker(m_Blocker);
-
-                m_Blocker = null;
-                Select();
-            }
-        }
-
         private IEnumerator DelayedDestroyDropdownList(float delay)
         {
             yield return new WaitForSecondsRealtime(delay);
@@ -1232,73 +1299,6 @@ namespace TMPro
 
             m_Dropdown = null;
             m_Coroutine = null;
-        }
-
-        // Change the value and hide the dropdown.
-        private void OnSelectItem(Toggle toggle)
-        {
-            int selectedIndex = -1;
-            Transform tr = toggle.transform;
-            Transform parent = tr.parent;
-            for (int i = 1; i < parent.childCount; i++)
-            {
-                if (parent.GetChild(i) == tr)
-                {
-                    // Subtract one to account for template child.
-                    selectedIndex = i - 1;
-                    break;
-                }
-            }
-
-            if (selectedIndex < 0)
-                return;
-
-            if (m_MultiSelect)
-            {
-                switch (selectedIndex)
-                {
-                    case 0: // Nothing
-                        value = 0;
-                        for (var i = 3; i < parent.childCount; i++)
-                        {
-                            var toggleComponent = parent.GetChild(i).GetComponentInChildren<Toggle>();
-                            if (toggleComponent)
-                                toggleComponent.SetIsOnWithoutNotify(false);
-                        }
-
-                        toggle.isOn = true;
-                        break;
-                    case 1: // Everything
-                        value = EverythingValue(options.Count);
-                        for (var i = 3; i < parent.childCount; i++)
-                        {
-                            var toggleComponent = parent.GetChild(i).GetComponentInChildren<Toggle>();
-                            if (toggleComponent)
-                                toggleComponent.SetIsOnWithoutNotify(i > 2);
-                        }
-                        break;
-                    default:
-                        var flagValue = 1 << (selectedIndex - 2);
-                        var wasSelected = (value & flagValue) != 0;
-                        toggle.SetIsOnWithoutNotify(!wasSelected);
-
-                        if (wasSelected)
-                            value &= ~flagValue;
-                        else
-                            value |= flagValue;
-
-                        break;
-                }
-            }
-            else
-            {
-                if (!toggle.isOn)
-                    toggle.SetIsOnWithoutNotify(true);
-
-                value = selectedIndex;
-            }
-
-            Hide();
         }
 
         static int FirstActiveFlagIndex(int value)
