@@ -737,7 +737,7 @@ namespace TMPro
         /// For world space canvases we don't know how it's used, but it could be e.g. for an in-game monitor.
         /// We consider it a fair constraint that the canvas must be big enough to contain dropdowns.
         /// </summary>
-        public void Show()
+        public void Show(bool isFocus = true)
         {
             if (m_Coroutine != null)
             {
@@ -892,7 +892,10 @@ namespace TMPro
             m_Template.gameObject.SetActive(false);
             itemTemplate.gameObject.SetActive(false);
 
-            m_Blocker = CreateBlocker(rootCanvas);
+            if (isFocus)
+            {
+                m_Blocker = CreateBlocker(rootCanvas);
+            }
         }
 
         /// <summary>
