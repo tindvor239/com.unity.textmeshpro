@@ -916,7 +916,7 @@ namespace TMPro
             }
         }
 
-        protected virtual SetupToggle(Toggle toggle, int index)
+        protected virtual void SetupToggle(Toggle toggle, int index)
         {
             // Automatically set up a toggle state change listener
             toggle.isOn = value == index;
