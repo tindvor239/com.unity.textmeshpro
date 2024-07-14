@@ -416,7 +416,7 @@ namespace TMPro
             SetValue(input, false);
         }
 
-        void SetValue(int value, bool sendCallback = true)
+        protected virtual void SetValue(int value, bool sendCallback = true)
         {
             if (Application.isPlaying && (value == m_Value || options.Count == 0))
                 return;
