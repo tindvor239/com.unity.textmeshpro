@@ -896,6 +896,56 @@ namespace TMPro
         }
 
         /// <summary>
+        /// Hide the dropdown list. I.e. close it.
+        /// </summary>
+        public void Hide()
+        {
+            if (m_Coroutine == null)
+            {
+                if (m_Dropdown != null)
+                {
+                    AlphaFadeList(m_AlphaFadeSpeed, 0f);
+
+                    // User could have disabled the dropdown during the OnValueChanged call.
+                    if (IsActive())
+                        m_Coroutine = StartCoroutine(DelayedDestroyDropdownList(m_AlphaFadeSpeed));
+                }
+
+                if (m_Blocker != null)
+                    DestroyBlocker(m_Blocker);
+
+                m_Blocker = null;
+                Select();
+            }
+        }
+
+        // Change the value and hide the dropdown.
+        protected virtual void OnSelectItem(Toggle toggle)
+        {
+            if (!toggle.isOn)
+                toggle.isOn = true;
+
+            int selectedIndex = -1;
+            Transform tr = toggle.transform;
+            Transform parent = tr.parent;
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                if (parent.GetChild(i) == tr)
+                {
+                    // Subtract one to account for template child.
+                    selectedIndex = i - 1;
+                    break;
+                }
+            }
+
+            if (selectedIndex < 0)
+                return;
+
+            value = selectedIndex;
+            Hide();
+        }
+
+        /// <summary>
         /// Create a blocker that blocks clicks to other controls while the dropdown list is open.
         /// </summary>
         /// <remarks>
@@ -1080,30 +1130,6 @@ namespace TMPro
             group.alpha = alpha;
         }
 
-        /// <summary>
-        /// Hide the dropdown list. I.e. close it.
-        /// </summary>
-        public void Hide()
-        {
-            if (m_Coroutine == null)
-            {
-                if (m_Dropdown != null)
-                {
-                    AlphaFadeList(m_AlphaFadeSpeed, 0f);
-
-                    // User could have disabled the dropdown during the OnValueChanged call.
-                    if (IsActive())
-                        m_Coroutine = StartCoroutine(DelayedDestroyDropdownList(m_AlphaFadeSpeed));
-                }
-
-                if (m_Blocker != null)
-                    DestroyBlocker(m_Blocker);
-
-                m_Blocker = null;
-                Select();
-            }
-        }
-
         private IEnumerator DelayedDestroyDropdownList(float delay)
         {
             yield return new WaitForSecondsRealtime(delay);
@@ -1128,32 +1154,6 @@ namespace TMPro
 
             m_Dropdown = null;
             m_Coroutine = null;
-        }
-
-        // Change the value and hide the dropdown.
-        private void OnSelectItem(Toggle toggle)
-        {
-            if (!toggle.isOn)
-                toggle.isOn = true;
-
-            int selectedIndex = -1;
-            Transform tr = toggle.transform;
-            Transform parent = tr.parent;
-            for (int i = 0; i < parent.childCount; i++)
-            {
-                if (parent.GetChild(i) == tr)
-                {
-                    // Subtract one to account for template child.
-                    selectedIndex = i - 1;
-                    break;
-                }
-            }
-
-            if (selectedIndex < 0)
-                return;
-
-            value = selectedIndex;
-            Hide();
         }
     }
 }
