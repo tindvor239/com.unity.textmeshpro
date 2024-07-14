@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.TextCore.Text;
 using UnityEngine.UI;
 using UnityEditor;
 
@@ -32,6 +31,7 @@ namespace TMPro.EditorUtilities
             GUI.Label(rect, (Foldout.extraSettings ? k_UiStateLabel[0] : k_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
             if (Foldout.extraSettings)
             {
+                //EditorGUI.indentLevel += 1;
 
                 DrawMargins();
 
@@ -47,16 +47,15 @@ namespace TMPro.EditorUtilities
 
                 DrawParsing();
 
-                DrawEmojiFallbackSupport();
-
                 DrawSpriteAsset();
 
                 DrawStyleSheet();
-                
-                DrawFontFeatures();
+
+                DrawKerning();
 
                 DrawPadding();
 
+                //EditorGUI.indentLevel -= 1;
             }
         }
 
@@ -119,7 +118,7 @@ namespace TMPro.EditorUtilities
                 for (int i = 0; i < targets.Length; i++)
                 {
                     //Debug.Log("Undo & Redo Performed detected in Editor Panel. Event ID:" + Undo.GetCurrentGroup());
-                    TextEventManager.ON_TEXTMESHPRO_UGUI_PROPERTY_CHANGED(true, targets[i] as TextMeshProUGUI);
+                    TMPro_EventManager.ON_TEXTMESHPRO_UGUI_PROPERTY_CHANGED(true, targets[i] as TextMeshProUGUI);
                     s_EventId = undoEventId;
                 }
             }

@@ -1,10 +1,7 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Serialization;
+﻿using UnityEngine;
 using System.Collections;
-using UnityEngine.TextCore;
-using UnityEngine.TextCore.Text;
-using TextAsset = UnityEngine.TextCore.Text.TextAsset;
+using System.Collections.Generic;
+
 
 #pragma warning disable 0649 // Disabled warnings related to serialized fields not assigned in this script but used in the editor.
 
@@ -33,43 +30,25 @@ namespace TMPro
         }
 
         /// <summary>
-        /// Controls the text wrapping mode of newly created text objects.
+        /// Controls if Word Wrapping will be enabled on newly created text objects by default.
         /// </summary>
-        public static TextWrappingModes textWrappingMode
+        public static bool enableWordWrapping
         {
-            get { return instance.m_TextWrappingMode; }
+            get { return instance.m_enableWordWrapping; }
         }
-        [FormerlySerializedAs("m_enableWordWrapping")]
         [SerializeField]
-        private TextWrappingModes m_TextWrappingMode;
+        private bool m_enableWordWrapping;
 
         /// <summary>
         /// Controls if Kerning is enabled on newly created text objects by default.
         /// </summary>
-        [System.Obsolete("The \"enableKerning\" property has been deprecated. Use the \"fontFeatures\" property to control what features are enabled by default on newly created text components.")]
         public static bool enableKerning
         {
-            get
-            {
-                if (instance.m_ActiveFontFeatures != null)
-                    return instance.m_ActiveFontFeatures.Contains(OTL_FeatureTag.kern);
-
-                return instance.m_enableKerning;
-            }
+            get { return instance.m_enableKerning; }
         }
         [SerializeField]
         private bool m_enableKerning;
 
-        /// <summary>
-        /// Controls which font features are enabled by default on newly created text objects.
-        /// </summary>
-        public static List<OTL_FeatureTag> fontFeatures
-        {
-            get { return instance.m_ActiveFontFeatures; }
-        }
-        [SerializeField]
-        private List<OTL_FeatureTag> m_ActiveFontFeatures = new List<OTL_FeatureTag> { 0 };
-        
         /// <summary>
         /// Controls if Extra Padding is enabled on newly created text objects by default.
         /// </summary>
@@ -132,16 +111,6 @@ namespace TMPro
         private int m_missingGlyphCharacter;
 
         /// <summary>
-        /// Determines if the "Clear Dynamic Data on Build" property will be set to true or false on newly created dynamic font assets.
-        /// </summary>
-        public static bool clearDynamicDataOnBuild
-        {
-            get { return instance.m_ClearDynamicDataOnBuild; }
-        }
-
-        [SerializeField] private bool m_ClearDynamicDataOnBuild = true;
-
-        /// <summary>
         /// Controls the display of warning message in the console.
         /// </summary>
         public static bool warningsDisabled
@@ -154,13 +123,12 @@ namespace TMPro
         /// <summary>
         /// Returns the Default Font Asset to be used by newly created text objects.
         /// </summary>
-        public static FontAsset defaultFontAsset
+        public static TMP_FontAsset defaultFontAsset
         {
             get { return instance.m_defaultFontAsset; }
-            set { instance.m_defaultFontAsset = value; }
         }
         [SerializeField]
-        private FontAsset m_defaultFontAsset;
+        private TMP_FontAsset m_defaultFontAsset;
 
         /// <summary>
         /// The relative path to a Resources folder in the project.
@@ -247,13 +215,12 @@ namespace TMPro
         /// <summary>
         /// Returns the list of Fallback Fonts defined in the TMP Settings file.
         /// </summary>
-        public static List<FontAsset> fallbackFontAssets
+        public static List<TMP_FontAsset> fallbackFontAssets
         {
             get { return instance.m_fallbackFontAssets; }
-            set { instance.m_fallbackFontAssets = value; }
         }
         [SerializeField]
-        private List<FontAsset> m_fallbackFontAssets;
+        private List<TMP_FontAsset> m_fallbackFontAssets;
 
         /// <summary>
         /// Controls whether or not TMP will create a matching material preset or use the default material of the fallback font asset.
@@ -266,24 +233,14 @@ namespace TMPro
         private bool m_matchMaterialPreset;
 
         /// <summary>
-        /// Determines if sub text objects will be hidden in the scene hierarchy.
-        /// </summary>
-        public static bool hideSubTextObjects
-        {
-            get { return instance.m_HideSubTextObjects; }
-        }
-        [SerializeField] private bool m_HideSubTextObjects = true;
-
-        /// <summary>
         /// The Default Sprite Asset to be used by default.
         /// </summary>
-        public static SpriteAsset defaultSpriteAsset
+        public static TMP_SpriteAsset defaultSpriteAsset
         {
             get { return instance.m_defaultSpriteAsset; }
-            set { instance.m_defaultSpriteAsset = value; }
         }
         [SerializeField]
-        private SpriteAsset m_defaultSpriteAsset;
+        private TMP_SpriteAsset m_defaultSpriteAsset;
 
         /// <summary>
         /// The relative path to a Resources folder in the project.
@@ -318,17 +275,6 @@ namespace TMPro
         private uint m_MissingCharacterSpriteUnicode;
 
         /// <summary>
-        /// list of Fallback Text Assets (Font Assets and Sprite Assets) used to lookup characters defined in the Unicode as Emojis.
-        /// </summary>
-        public static List<TextAsset> emojiFallbackTextAssets
-        {
-            get => instance.m_EmojiFallbackTextAssets;
-            set => instance.m_EmojiFallbackTextAssets = value;
-        }
-        [SerializeField]
-        private List<TextAsset> m_EmojiFallbackTextAssets;
-
-        /// <summary>
         /// Determines if sprites will be scaled relative to the primary font asset assigned to the text object or relative to the current font asset.
         /// </summary>
         //public static SpriteRelativeScaling spriteRelativeScaling
@@ -352,13 +298,12 @@ namespace TMPro
         /// <summary>
         /// The Default Style Sheet used by the text objects.
         /// </summary>
-        public static TextStyleSheet defaultStyleSheet
+        public static TMP_StyleSheet defaultStyleSheet
         {
             get { return instance.m_defaultStyleSheet; }
-            set { instance.m_defaultStyleSheet = value; }
         }
         [SerializeField]
-        private TextStyleSheet m_defaultStyleSheet;
+        private TMP_StyleSheet m_defaultStyleSheet;
 
         /// <summary>
         /// The relative path to a Resources folder in the project that contains the TMP Style Sheets.
@@ -373,22 +318,22 @@ namespace TMPro
         /// <summary>
         /// Text file that contains the leading characters used for line breaking for Asian languages.
         /// </summary>
-        public static UnityEngine.TextAsset leadingCharacters
+        public static TextAsset leadingCharacters
         {
             get { return instance.m_leadingCharacters; }
         }
         [SerializeField]
-        private UnityEngine.TextAsset m_leadingCharacters;
+        private TextAsset m_leadingCharacters;
 
         /// <summary>
         /// Text file that contains the following characters used for line breaking for Asian languages.
         /// </summary>
-        public static UnityEngine.TextAsset followingCharacters
+        public static TextAsset followingCharacters
         {
             get { return instance.m_followingCharacters; }
         }
         [SerializeField]
-        private UnityEngine.TextAsset m_followingCharacters;
+        private TextAsset m_followingCharacters;
 
         /// <summary>
         ///
@@ -440,30 +385,21 @@ namespace TMPro
         {
             get
             {
-                if (s_Instance == null)
+                if (TMP_Settings.s_Instance == null)
                 {
-                    s_Instance = Resources.Load<TMP_Settings>("TMP Settings");
+                    TMP_Settings.s_Instance = Resources.Load<TMP_Settings>("TMP Settings");
 
                     #if UNITY_EDITOR
                     // Make sure TextMesh Pro UPM packages resources have been added to the user project
-                    if (s_Instance == null && Time.frameCount != 0)
+                    if (TMP_Settings.s_Instance == null)
                     {
                         // Open TMP Resources Importer
                         TMP_PackageResourceImporterWindow.ShowPackageImporterWindow();
                     }
                     #endif
-
-                    // Convert use of the "enableKerning" property to the new "fontFeature" property.
-                    if (s_Instance != null && s_Instance.m_ActiveFontFeatures.Count == 1 && s_Instance.m_ActiveFontFeatures[0] == 0)
-                    {
-                        s_Instance.m_ActiveFontFeatures.Clear();
-                        
-                        if (s_Instance.m_enableKerning)
-                            s_Instance.m_ActiveFontFeatures.Add(OTL_FeatureTag.kern);
-                    }
                 }
 
-                return s_Instance;
+                return TMP_Settings.s_Instance;
             }
         }
 
@@ -502,7 +438,7 @@ namespace TMPro
         /// Returns the Font Asset defined in the TMP Settings file.
         /// </summary>
         /// <returns></returns>
-        public static FontAsset GetFontAsset()
+        public static TMP_FontAsset GetFontAsset()
         {
             if (TMP_Settings.instance == null) return null;
 
@@ -514,7 +450,7 @@ namespace TMPro
         /// Returns the Sprite Asset defined in the TMP Settings file.
         /// </summary>
         /// <returns></returns>
-        public static SpriteAsset GetSpriteAsset()
+        public static TMP_SpriteAsset GetSpriteAsset()
         {
             if (TMP_Settings.instance == null) return null;
 
@@ -526,7 +462,7 @@ namespace TMPro
         /// Returns the Style Sheet defined in the TMP Settings file.
         /// </summary>
         /// <returns></returns>
-        public static TextStyleSheet GetStyleSheet()
+        public static TMP_StyleSheet GetStyleSheet()
         {
             if (TMP_Settings.instance == null) return null;
 
@@ -538,7 +474,7 @@ namespace TMPro
         {
             //Debug.Log("Loading Line Breaking Rules for Asian Languages.");
 
-            if (instance == null) return;
+            if (TMP_Settings.instance == null) return;
 
             if (s_Instance.m_linebreakingRules == null)
                 s_Instance.m_linebreakingRules = new LineBreakingTable();
@@ -553,22 +489,32 @@ namespace TMPro
         /// </summary>
         /// <param name="file"></param>
         /// <returns></returns>
-        private static HashSet<uint> GetCharacters(UnityEngine.TextAsset file)
+        private static Dictionary<int, char> GetCharacters(TextAsset file)
         {
-            HashSet<uint> ruleSet = new HashSet<uint>();
+            Dictionary<int, char> dict = new Dictionary<int, char>();
             string text = file.text;
 
             for (int i = 0; i < text.Length; i++)
-                ruleSet.Add(text[i]);
+            {
+                char c = text[i];
+                // Check to make sure we don't include duplicates
+                if (dict.ContainsKey((int)c) == false)
+                {
+                    dict.Add((int)c, c);
+                    //Debug.Log("Adding [" + (int)c + "] to dictionary.");
+                }
+                //else
+                //    Debug.Log("Character [" + text[i] + "] is a duplicate.");
+            }
 
-            return ruleSet;
+            return dict;
         }
 
 
         public class LineBreakingTable
         {
-            public HashSet<uint> leadingCharacters;
-            public HashSet<uint> followingCharacters;
+            public Dictionary<int, char> leadingCharacters;
+            public Dictionary<int, char> followingCharacters;
         }
     }
 }

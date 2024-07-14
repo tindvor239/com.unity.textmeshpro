@@ -1,8 +1,8 @@
 ﻿//#define TMP_DEBUG_MODE
 
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.TextCore.Text;
+using System.Collections.Generic;
+
 using UnityEngine.UI;
 
 
@@ -340,7 +340,7 @@ namespace TMPro
         }
 
 
-        internal static Material GetFallbackMaterial(FontAsset fontAsset, Material sourceMaterial, int atlasIndex)
+        internal static Material GetFallbackMaterial(TMP_FontAsset fontAsset, Material sourceMaterial, int atlasIndex)
         {
             int sourceMaterialID = sourceMaterial.GetInstanceID();
             Texture tex = fontAsset.atlasTextures[atlasIndex];
@@ -436,13 +436,7 @@ namespace TMPro
             }
             else
             {
-                // TODO: Need to add material property copy for bitmap materials as well
                 fallbackMaterial = new Material(targetMaterial);
-                fallbackMaterial.hideFlags = HideFlags.HideAndDontSave;
-
-                #if UNITY_EDITOR
-                fallbackMaterial.name += " + " + tex.name;
-                #endif
             }
 
             fallback = new FallbackMaterial();
@@ -610,9 +604,6 @@ namespace TMPro
             float dst_texHeight = destination.GetFloat(ShaderUtilities.ID_TextureHeight);
             float dst_weightNormal = destination.GetFloat(ShaderUtilities.ID_WeightNormal);
             float dst_weightBold = destination.GetFloat(ShaderUtilities.ID_WeightBold);
-
-            // Make sure the same shader is used
-            destination.shader = source.shader;
 
             // Copy all material properties
             destination.CopyPropertiesFromMaterial(source);

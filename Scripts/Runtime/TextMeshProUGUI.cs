@@ -14,7 +14,7 @@ namespace TMPro
     [RequireComponent(typeof(CanvasRenderer))]
     [AddComponentMenu("UI/TextMeshPro - Text (UI)", 11)]
     [ExecuteAlways]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@4.0")]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0")]
     public partial class TextMeshProUGUI : TMP_Text, ILayoutElement
     {
         /// <summary>
@@ -364,12 +364,10 @@ namespace TMPro
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            m_ShouldUpdateCulling = false;
-
             // Delay culling check in the event the text layout is dirty and geometry has to be updated.
             if (m_isLayoutDirty)
             {
-                m_ShouldUpdateCulling = true;
+                TMP_UpdateManager.RegisterTextElementForCullingUpdate(this);
                 m_ClipRect = clipRect;
                 m_ValidRect = validRect;
                 return;
@@ -379,8 +377,8 @@ namespace TMPro
             Rect rect = GetCanvasSpaceClippingRect();
 
             // No point culling if geometry bounds have no width or height.
-            //if (rect.width == 0 || rect.height == 0)
-            //    return;
+            if (rect.width == 0 || rect.height == 0)
+                return;
 
             var cull = !validRect || !clipRect.Overlaps(rect, true);
             if (m_canvasRenderer.cull != cull)
@@ -397,7 +395,6 @@ namespace TMPro
             }
         }
 
-        private bool m_ShouldUpdateCulling;
         private Rect m_ClipRect;
         private bool m_ValidRect;
 
@@ -410,8 +407,8 @@ namespace TMPro
             Rect rect = GetCanvasSpaceClippingRect();
 
             // No point culling if geometry bounds have no width or height.
-            //if (rect.width == 0 || rect.height == 0)
-            //    return;
+            if (rect.width == 0 || rect.height == 0)
+                return;
 
             var cull = !m_ValidRect || !m_ClipRect.Overlaps(rect, true);
             if (m_canvasRenderer.cull != cull)
@@ -426,8 +423,6 @@ namespace TMPro
                     m_subTextObjects[i].canvasRenderer.cull = cull;
                 }
             }
-
-            m_ShouldUpdateCulling = false;
         }
 
 
@@ -642,7 +637,7 @@ namespace TMPro
                     mesh.vertices = m_textInfo.meshInfo[i].vertices;
 
                 if ((flags & TMP_VertexDataUpdateFlags.Uv0) == TMP_VertexDataUpdateFlags.Uv0)
-                    mesh.SetUVs(0, m_textInfo.meshInfo[i].uvs0);
+                    mesh.uv = m_textInfo.meshInfo[i].uvs0;
 
                 if ((flags & TMP_VertexDataUpdateFlags.Uv2) == TMP_VertexDataUpdateFlags.Uv2)
                     mesh.uv2 = m_textInfo.meshInfo[i].uvs2;
@@ -686,7 +681,7 @@ namespace TMPro
 
                 //mesh.MarkDynamic();
                 mesh.vertices = m_textInfo.meshInfo[i].vertices;
-                mesh.SetUVs(0, m_textInfo.meshInfo[i].uvs0);
+                mesh.uv = m_textInfo.meshInfo[i].uvs0;
                 mesh.uv2 = m_textInfo.meshInfo[i].uvs2;
                 //mesh.uv4 = m_textInfo.meshInfo[i].uvs4;
                 mesh.colors32 = m_textInfo.meshInfo[i].colors32;

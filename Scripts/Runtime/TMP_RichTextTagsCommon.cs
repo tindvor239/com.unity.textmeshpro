@@ -5,10 +5,11 @@ using UnityEngine.Bindings;
 namespace TMPro
 {
     /// <summary>
-    /// Rich text markup tags and attribute definitions and respective hash code values.
+    /// Rich Text Tags and Attribute definitions and their respective HashCode values.
     /// </summary>
-    internal enum MarkupTag
+    internal enum MarkupTag : int
     {
+        // Rich Text Tags
         BOLD = 66,                          // <b>
         SLASH_BOLD = 1613,                  // </b>
         ITALIC = 73,                        // <i>
@@ -80,15 +81,6 @@ namespace TMPro
         ROTATE = -1000007783,               // <rotate>
         SLASH_ROTATE = -764695562,          // </rotate>
 
-        TABLE = 226476955,                  // <table>
-        SLASH_TABLE = -979118220,           // </table>
-        TH = 5862489,                       // <th>
-        SLASH_TH = 193346070,               // </th>
-        TR = 5862467,                       // <tr>
-        SLASH_TR = 193346060,               // </tr>
-        TD = 5862485,                       // <td>
-        SLASH_TD = 193346074,               // </td>
-
         LOWERCASE = -1506899689,            // <lowercase>
         SLASH_LOWERCASE = -1451284584,      // </lowercase>
         ALLCAPS = 218273952,                // <allcaps>
@@ -112,10 +104,6 @@ namespace TMPro
         MATERIAL = 825491659,           // <font="Name of font asset" material="Name of material">
         HREF = 2535353,                 // <a href="url">text to be displayed.</a>
         ANGLE = 75347905,               // <i angle="40">Italic Slant Angle</i>
-        PADDING = -2144568463,
-        FAMILYNAME = 704251153,
-        STYLENAME = -1207081936,
-        DUOSPACE = 582810522,           // <mspace="value" duospace=1> to enable this mode
 
         // Named Colors
         RED = 91635,
@@ -128,10 +116,8 @@ namespace TMPro
         PURPLE = -1250222130,
 
         // Unicode Characters
-        BR = 2256,                          // <br> Line Feed (LF) \u000A
-        CR = 2289,                          // <cr> Carriage Return (CR) \u000D
+        BR = 2256,                          // <br> Line Feed (LF) \u0A
         ZWSP = 3288238,                     // <zwsp> Zero Width Space \u200B
-        ZWJ = 99623,                        // <zwj> Zero Width Space \u200D
         NBSP = 2869039,                     // <nbsp> Non Breaking Space \u00A0
         SHY = 92674,                        // <SHY> Soft Hyphen \u00AD
 
@@ -163,11 +149,9 @@ namespace TMPro
         FALSE = 85422813,
 
         INVALID = 1585415185,
-        NOTDEF = 612146780,             // .notdef
 
         NORMAL = -1183493901,           // <style="Normal">
         DEFAULT = -620974005,           // <font="Default">
-        REGULAR = 1291372090,
     }
 
     /// <summary>

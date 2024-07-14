@@ -1,8 +1,7 @@
-﻿using System.Collections;
+﻿using UnityEngine;
+using UnityEngine.TextCore;
+using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.TextCore.Text;
-
 
 namespace TMPro
 {
@@ -40,7 +39,7 @@ namespace TMPro
         }
 
 
-        public void DoSpriteAnimation(int currentCharacter, SpriteAsset spriteAsset, int start, int end, int framerate)
+        public void DoSpriteAnimation(int currentCharacter, TMP_SpriteAsset spriteAsset, int start, int end, int framerate)
         {
             bool isPlaying;
 
@@ -53,7 +52,7 @@ namespace TMPro
         }
 
 
-        IEnumerator DoSpriteAnimationInternal(int currentCharacter, SpriteAsset spriteAsset, int start, int end, int framerate)
+        IEnumerator DoSpriteAnimationInternal(int currentCharacter, TMP_SpriteAsset spriteAsset, int start, int end, int framerate)
         {
             if (m_TextComponent == null) yield break;
 
@@ -86,7 +85,7 @@ namespace TMPro
                     elapsedTime = 0;
 
                     // Return if sprite was truncated or replaced by the Ellipsis character.
-                    uint character = m_TextComponent.textInfo.characterInfo[currentCharacter].character;
+                    char character = m_TextComponent.textInfo.characterInfo[currentCharacter].character;
                     if (character == 0x03 || character == 0x2026)
                     {
                         m_animations.Remove(currentCharacter);
@@ -94,7 +93,7 @@ namespace TMPro
                     }
 
                     // Get a reference to the current sprite
-                    SpriteCharacter spriteCharacter = spriteAsset.spriteCharacterTable[currentFrame];
+                    TMP_SpriteCharacter spriteCharacter = spriteAsset.spriteCharacterTable[currentFrame];
 
                     // Update the vertices for the new sprite
                     Vector3[] vertices = meshInfo.vertices;
@@ -114,7 +113,7 @@ namespace TMPro
                     vertices[vertexIndex + 3] = br;
 
                     // Update the UV to point to the new sprite
-                    Vector4[] uvs0 = meshInfo.uvs0;
+                    Vector2[] uvs0 = meshInfo.uvs0;
 
                     Vector2 uv0 = new Vector2((float)spriteCharacter.glyph.glyphRect.x / spriteAsset.spriteSheet.width, (float)spriteCharacter.glyph.glyphRect.y / spriteAsset.spriteSheet.height);
                     Vector2 uv1 = new Vector2(uv0.x, (float)(spriteCharacter.glyph.glyphRect.y + spriteCharacter.glyph.glyphRect.height) / spriteAsset.spriteSheet.height);
@@ -128,7 +127,7 @@ namespace TMPro
 
                     // Update the modified vertex attributes
                     meshInfo.mesh.vertices = vertices;
-                    meshInfo.mesh.SetUVs(0, uvs0);
+                    meshInfo.mesh.uv = uvs0;
                     m_TextComponent.UpdateGeometry(meshInfo.mesh, materialIndex);
 
 

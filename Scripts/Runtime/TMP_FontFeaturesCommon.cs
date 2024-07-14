@@ -7,6 +7,14 @@ using UnityEngine.TextCore.LowLevel;
 
 namespace TMPro
 {
+    [Flags]
+    public enum FontFeatureLookupFlags
+    {
+        None                        =     0x0,
+        IgnoreLigatures             =   0x004,
+        IgnoreSpacingAdjustments    =   0x100,
+    }
+
     /// <summary>
     /// The values used to adjust the position of a glyph or set of glyphs.
     /// </summary>

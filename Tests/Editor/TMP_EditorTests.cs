@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using UnityEngine.TestTools;
 using NUnit.Framework;
 using System.IO;
+using System.Collections;
 
 
 namespace TMPro
@@ -17,7 +19,7 @@ namespace TMPro
         // Characters: 104  Spaces: 14  Words: 15  Lines:
         private const string m_TextBlock_01 = "Unity 2017 introduces new features that help teams of artists and developers build experiences together.";
 
-        // Characters: 1500  Spaces: 228  Words: 241
+        // Characters: 1500  Spaces: 228  Words: 241 
         private const string m_TextBlock_02 = "The European languages are members of the same family. Their separate existence is a myth. For science, music, sport, etc, Europe uses the same vocabulary. The languages only differ in their grammar, their pronunciation and their most common words." +
             "Everyone realizes why a new common language would be desirable: one could refuse to pay expensive translators.To achieve this, it would be necessary to have uniform grammar, pronunciation and more common words.If several languages coalesce, the grammar of the resulting language is more simple and regular than that of the individual languages." +
             "The new common language will be more simple and regular than the existing European languages.It will be as simple as Occidental; in fact, it will be Occidental.To an English person, it will seem like simplified English, as a skeptical Cambridge friend of mine told me what Occidental is. The European languages are members of the same family." +
@@ -40,7 +42,7 @@ namespace TMPro
             "Phasellus leo dolor, tempus non, auctor et, hendrerit quis, nisi.Curabitur ligula sapien, tincidunt non, euismod vitae, posuere imperdiet, leo.Maecenas malesuada. Praesent congue erat at massa.Sed cursus turpis vitae tortor.Donec posuere vulputate arcu. Phasellus accumsan cursus velit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed aliquam, nisi quis porttitor congue, elit erat euismod orci, ac placerat dolor lectus quis orci.Phasellus consectetuer vestibulum elit.Aenean tellus metus, bibendum sed, posuere ac, mattis non, nunc.Vestibulum fringilla pede sit amet augue." +
             "In turpis. Pellentesque posuere. Praesent turpis. Aenean posuere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Donec elit libero, sodales nec, volutpat a, suscipit non, turpis.Nullam sagittis. Suspendisse pulvinar, augue ac venenatis condimentum, sem libero volutpat nibh, nec pellentesque velit pede quis nunc. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce id purus.Ut varius tincidunt libero.Phasellus dolor.Maecenas vestibulum mollis";
 
-        //
+        // 
         private const string m_TextBlock_05 = "This block of text contains <b>bold</b> and <i>italicized</i> characters.";
 
         private const string m_TextBlock_06 = "<align=center><style=H1><#ffffff><u>Multiple<#80f0ff> Alignment</color> per text object</u></color></style></align><line-height=2em>\n" +
@@ -69,6 +71,8 @@ namespace TMPro
             {
                 Debug.Log("Skipping over Editor tests as TMP Essential Resources are missing from the current test project.");
                 Assert.Ignore();
+
+                return;
             }
         }
 
@@ -83,17 +87,10 @@ namespace TMPro
             string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
 
             Assert.AreEqual(AssetDatabase.AssetPathToGUID(packageRelativePath + filePath), guid);
-            Assert.IsTrue(File.Exists(packageFullPath + filePath));
+            Assert.IsTrue(System.IO.File.Exists(packageFullPath + filePath));
+
         }
 
-        // =============================================
-        // Font Asset Creation Tests
-        // =============================================
-
-
-        // =============================================
-        // Text Parsing and Layout Tests
-        // =============================================
 
         [Test]
         [TestCase(4, 3423, 453, 500, 1)]
@@ -104,7 +101,7 @@ namespace TMPro
         public void TextParsing_TextInfoTest_WordWrappingDisabled(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = testStrings[sourceTextIndex];
-            m_TextComponent.textWrappingMode = TextWrappingModes.NoWrap;
+            m_TextComponent.enableWordWrapping = false;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
             // Size the RectTransform
@@ -129,7 +126,7 @@ namespace TMPro
         public void TextParsing_TextInfoTest_WordWrappingEnabled(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = testStrings[sourceTextIndex];
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.enableWordWrapping = true;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
             // Size the RectTransform
@@ -152,7 +149,7 @@ namespace TMPro
         public void TextParsing_TextInfoTest_TopJustifiedAlignment(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = testStrings[sourceTextIndex];
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.enableWordWrapping = true;
             m_TextComponent.alignment = TextAlignmentOptions.TopJustified;
 
             // Size the RectTransform
@@ -174,7 +171,7 @@ namespace TMPro
         public void TextParsing_TextInfoTest_RichText(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = testStrings[sourceTextIndex];
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.enableWordWrapping = true;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
             // Size the RectTransform
@@ -189,180 +186,6 @@ namespace TMPro
             Assert.AreEqual(m_TextComponent.textInfo.lineCount, lineCount);
         }
 
-        // =============================================
-        // Markup tag specific tests
-        // =============================================
-
-        [Test]
-        [TestCase("<scale=1.0>ABC</scale>", -35.0f, -33.8069763f, -33.8069763f, -32.6139526f, -32.6139526f, -31.3162785f)]
-        [TestCase("<scale=0.8>ABC</scale>", -35.0f, -34.0455818f, -34.0455818f, -33.0911636f, -33.0911636f, -32.0530243f)]
-        [TestCase("<scale=1.2>ABC</scale>", -35.0f, -33.5683708f, -33.5683708f, -32.1367455f, -32.1367455f, -30.5795345f)]
-        public void MarkupTag_Scale(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
-        {
-            m_TextComponent.text = sourceText;
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
-            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
-
-            // Size the RectTransform
-            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
-
-            // Force text generation to populate the TextInfo data structure.
-            m_TextComponent.ForceMeshUpdate();
-
-            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
-            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
-            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
-            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
-            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
-            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
-        }
-
-        [Test]
-        [TestCase("<size=12>ABC</size>", -35.0f, -34.2046509f, -34.2046509f, -33.4093018f, -33.4093018f, -32.5441856f)]
-        [TestCase("<size=-6>ABC</size>", -35.0f, -34.2046509f, -34.2046509f, -33.4093018f, -33.4093018f, -32.5441856f)]
-        [TestCase("<size=+6>ABC</size>", -35.0f, -33.4093018f, -33.4093018f, -31.8186054f, -31.8186054f, -30.0883713f)]
-        [TestCase("<size=50%>ABC</size>", -35.0f,  -34.4034882f, -34.4034882f, -33.8069763f, -33.8069763f, -33.1581383f)]
-        [TestCase("<size=150%>DEF</size>", -35.0f, -33.0534897f, -33.0534897f, -31.2639542f, -31.2639542f, -29.6000004f)]
-        [TestCase("<size=0.5em>ABC</size>", -35.0f,  -34.4034882f, -34.4034882f, -33.8069763f, -33.8069763f, -33.1581383f)]
-        [TestCase("<size=1.5em>DEF</size>", -35.0f, -33.0534897f, -33.0534897f, -31.2639542f, -31.2639542f, -29.6000004f)]
-        public void MarkupTag_Size(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
-        {
-            m_TextComponent.text = sourceText;
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
-            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
-
-            // Size the RectTransform
-            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
-
-            // Force text generation to populate the TextInfo data structure.
-            m_TextComponent.ForceMeshUpdate();
-
-            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
-            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
-            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
-            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
-            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
-            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
-        }
-
-        [Test]
-        [TestCase("<cspace=30>ABC</cspace>", -35.0f, -30.8069763f, -30.8069763f, -26.6139526f, -26.6139526f, -25.3162804f)]
-        [TestCase("<cspace=2em>ABC</cspace>", -35.0f, -30.2069759f, -30.2069759f, -25.4139519f, -25.4139519f, -24.1162796f)]
-        public void MarkupTag_Cspace(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
-        {
-            m_TextComponent.text = sourceText;
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
-            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
-
-            // Size the RectTransform
-            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
-
-            // Force text generation to populate the TextInfo data structure.
-            m_TextComponent.ForceMeshUpdate();
-
-            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
-            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
-            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
-            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
-            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
-            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
-
-        }
-
-        [Test]
-        [TestCase("<mspace=30>ABC</mspace>", -34.0965118f, -32.0f, -31.1279068f, -29.0f, -28.1593018f, -26.0f)]
-        [TestCase("<mspace=2em>ABC</mspace>", -33.7965126f, -31.3999996f, -30.2279072f, -27.7999992f, -26.6593018f, -24.2000008f)]
-        public void MarkupTag_Mspace(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
-        {
-            m_TextComponent.text = sourceText;
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
-            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
-
-            // Size the RectTransform
-            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
-
-            // Force text generation to populate the TextInfo data structure.
-            m_TextComponent.ForceMeshUpdate();
-
-            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
-            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
-            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
-            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
-            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
-            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
-        }
-
-        [Test]
-        [TestCase("A<space=18>B<space=18>C", -35.0f, -33.8069763f, -32.0069771f, -30.8139534f, -29.0139542f, -27.7162781f)]
-        [TestCase("A<space=1em>B<space=1em>C", -35.0f, -33.8069763f, -32.0069771f, -30.8139534f, -29.0139542f, -27.7162781f)]
-        public void MarkupTag_Space(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
-        {
-            m_TextComponent.text = sourceText;
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
-            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
-
-            // Size the RectTransform
-            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
-
-            // Force text generation to populate the TextInfo data structure.
-            m_TextComponent.ForceMeshUpdate();
-
-            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
-            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
-            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
-            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
-            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
-            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
-        }
-
-        [Test]
-        [TestCase("A<pos=10%>B<pos=20%>C", -35.0f, -33.8069763f, -28.0f, -26.8069763f, -21.0f, -19.7023258f)]
-        [TestCase("A<pos=70>B<pos=140>C", -35.0f, -33.8069763f, -28.0f, -26.8069763f, -21.0f, -19.7023258f)]
-        [TestCase("A<pos=1.5em>B<pos=3em>CC", -35.0f, -33.8069763f, -32.2999992f, -31.1069775f, -29.6000004f, -28.3023262f)]
-        public void MarkupTag_Pos(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
-        {
-            m_TextComponent.text = sourceText;
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
-            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
-
-            // Size the RectTransform
-            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
-
-            // Force text generation to populate the TextInfo data structure.
-            m_TextComponent.ForceMeshUpdate();
-
-            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
-            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
-            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
-            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
-            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
-            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
-        }
-
-        [Test]
-        [TestCase("<indent=18>ABC", -33.2000008f, -32.0069771f, -32.0069771f, -30.8139534f, -30.8139534f, -29.5162792f)]
-        [TestCase("<indent=1em>ABC", -33.2000008f, -32.0069771f, -32.0069771f, -30.8139534f, -30.8139534f, -29.5162792f)]
-        [TestCase("<indent=2.5%>ABC", -33.25f, -32.0569763f, -32.0569763f, -30.8639526f, -30.8639526f, -29.5662804f)]
-        public void MarkupTag_Indent(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
-        {
-            m_TextComponent.text = sourceText;
-            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
-            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
-
-            // Size the RectTransform
-            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
-
-            // Force text generation to populate the TextInfo data structure.
-            m_TextComponent.ForceMeshUpdate();
-
-            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
-            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
-            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
-            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
-            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
-            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
-        }
-
 
         // Add tests that check position of individual characters in a complex block of text.
         // These test also use the data contained inside the TMP_TextInfo class.
@@ -372,12 +195,12 @@ namespace TMPro
         //public void Cleanup()
         //{
         //    // Remove TMP Essential Resources if they were imported in the project as a result of running tests.
-        //    if (TextEventManager.temporaryResourcesImported == true)
+        //    if (TMPro_EventManager.temporaryResourcesImported == true)
         //    {
         //        if (Directory.Exists(Path.GetFullPath("Assets/TextMesh Pro")))
         //        {
         //            AssetDatabase.DeleteAsset("Assets/TextMesh Pro");
-        //            TextEventManager.temporaryResourcesImported = false;
+        //            TMPro_EventManager.temporaryResourcesImported = false;
         //        }
         //    }
         //}

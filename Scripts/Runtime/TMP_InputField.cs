@@ -2,13 +2,15 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
+using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEngine.TextCore.Text;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
 
 namespace TMPro
@@ -17,7 +19,6 @@ namespace TMPro
     /// Editable text input field.
     /// </summary>
     [AddComponentMenu("UI/TextMeshPro - Input Field", 11)]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.2")]
     public class TMP_InputField : Selectable,
         IUpdateSelectedHandler,
         IBeginDragHandler,
@@ -91,12 +92,6 @@ namespace TMPro
 
         protected TouchScreenKeyboard m_SoftKeyboard;
         static private readonly char[] kSeparators = { ' ', '.', ',', '\t', '\r', '\n' };
-
-    #if UNITY_ANDROID
-        static private bool s_IsQuestDeviceEvaluated = false;
-    #endif // if UNITY_ANDROID
-
-        static private bool s_IsQuestDevice = false;
 
         #region Exposed properties
         /// <summary>
@@ -333,11 +328,8 @@ namespace TMPro
         private float m_KeyDownStartTime;
         private float m_DoubleClickDelay = 0.5f;
 
-        private bool m_IsApplePlatform = false;
-
         // Doesn't include dot and @ on purpose! See usage for details.
         const string kEmailSpecialCharacters = "!#$%&'*+-/=?^_`{|}~";
-        const string kOculusQuestDeviceModel = "Oculus Quest";
 
         private BaseInput inputSystem
         {
@@ -386,21 +378,6 @@ namespace TMPro
         }
 
         /// <summary>
-        /// Should the inputfield be automatically activated upon selection.
-        /// </summary>
-        public virtual bool shouldActivateOnSelect
-        {
-            set
-            {
-                m_ShouldActivateOnSelect = value;
-            }
-            get
-            {
-                return m_ShouldActivateOnSelect && Application.platform != RuntimePlatform.tvOS;
-            }
-        }
-
-        /// <summary>
         /// Should the mobile keyboard input be hidden.
         /// </summary>
         public bool shouldHideMobileInput
@@ -412,9 +389,6 @@ namespace TMPro
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
                     case RuntimePlatform.tvOS:
-                    #if UNITY_2022_1_OR_NEWER
-                    case RuntimePlatform.WebGLPlayer:
-                    #endif
                         return m_HideMobileInput;
                     default:
                         return true;
@@ -428,9 +402,6 @@ namespace TMPro
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
                     case RuntimePlatform.tvOS:
-                    #if UNITY_2022_1_OR_NEWER
-                    case RuntimePlatform.WebGLPlayer:
-                    #endif
                         SetPropertyUtility.SetStruct(ref m_HideMobileInput, value);
                         break;
                     default:
@@ -449,23 +420,20 @@ namespace TMPro
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
                     case RuntimePlatform.tvOS:
+                    #if UNITY_XR_VISIONOS_SUPPORTED
+                    case RuntimePlatform.VisionOS:
+                    #endif
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
+                    case RuntimePlatform.Stadia:
                     #if UNITY_2020_2_OR_NEWER
                     case RuntimePlatform.PS4:
                         #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
                         case RuntimePlatform.PS5:
                         #endif
                     #endif
-                    #if UNITY_2019_4_OR_NEWER
-                    case RuntimePlatform.GameCoreXboxOne:
-                    case RuntimePlatform.GameCoreXboxSeries:
-                    #endif
                     case RuntimePlatform.Switch:
-                    #if UNITY_2022_1_OR_NEWER
-                    case RuntimePlatform.WebGLPlayer:
-                    #endif
                         return m_HideSoftKeyboard;
                     default:
                         return true;
@@ -479,23 +447,20 @@ namespace TMPro
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
                     case RuntimePlatform.tvOS:
+                    #if UNITY_XR_VISIONOS_SUPPORTED
+                    case RuntimePlatform.VisionOS:
+                    #endif
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
+                    case RuntimePlatform.Stadia:
                     #if UNITY_2020_2_OR_NEWER
                     case RuntimePlatform.PS4:
                         #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
                         case RuntimePlatform.PS5:
                         #endif
                     #endif
-                    #if UNITY_2019_4_OR_NEWER
-                    case RuntimePlatform.GameCoreXboxOne:
-                    case RuntimePlatform.GameCoreXboxSeries:
-                    #endif
                     case RuntimePlatform.Switch:
-                    #if UNITY_2022_1_OR_NEWER
-                    case RuntimePlatform.WebGLPlayer:
-                    #endif
                         SetPropertyUtility.SetStruct(ref m_HideSoftKeyboard, value);
                         break;
                     default:
@@ -516,34 +481,22 @@ namespace TMPro
             switch (Application.platform)
             {
                 case RuntimePlatform.Android:
-                    return InPlaceEditing() && m_HideSoftKeyboard;
                 case RuntimePlatform.IPhonePlayer:
                 case RuntimePlatform.tvOS:
-                    return m_HideSoftKeyboard;
+                #if UNITY_XR_VISIONOS_SUPPORTED
+                case RuntimePlatform.VisionOS:
+                #endif
                 #if UNITY_2020_2_OR_NEWER
                 case RuntimePlatform.PS4:
                     #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
                     case RuntimePlatform.PS5:
                     #endif
                 #endif
-                #if UNITY_2019_4_OR_NEWER
-                case RuntimePlatform.GameCoreXboxOne:
-                case RuntimePlatform.GameCoreXboxSeries:
-                #endif
                 case RuntimePlatform.Switch:
                     return false;
-                #if UNITY_2022_1_OR_NEWER
-                case RuntimePlatform.WebGLPlayer:
-                    return m_SoftKeyboard == null || !m_SoftKeyboard.active;
-                #endif
                 default:
                     return true;
             }
-        }
-
-        private bool isUWP()
-        {
-            return Application.platform == RuntimePlatform.WSAPlayerX86 || Application.platform == RuntimePlatform.WSAPlayerX64 || Application.platform == RuntimePlatform.WSAPlayerARM;
         }
 
         /// <summary>
@@ -768,7 +721,7 @@ namespace TMPro
         /// <summary>
         /// Sets the Font Asset on both Placeholder and Input child objects.
         /// </summary>
-        public FontAsset fontAsset
+        public TMP_FontAsset fontAsset
         {
             get { return m_GlobalFontAsset; }
             set
@@ -781,7 +734,7 @@ namespace TMPro
             }
         }
         [SerializeField]
-        protected FontAsset m_GlobalFontAsset;
+        protected TMP_FontAsset m_GlobalFontAsset;
 
         /// <summary>
         /// Determines if the whole text will be selected when focused.
@@ -807,21 +760,8 @@ namespace TMPro
         protected bool m_ResetOnDeActivation = true;
         private bool m_SelectionStillActive = false;
         private bool m_ReleaseSelection = false;
-        private KeyCode m_LastKeyCode;
 
         private GameObject m_PreviouslySelectedObject;
-
-        /// <summary>
-        /// Determines if the text selection will remain visible when the input field looses focus and is deactivated.
-        /// </summary>
-        public bool keepTextSelectionVisible
-        {
-            get { return m_KeepTextSelectionVisible; }
-            set { m_KeepTextSelectionVisible = value; }
-        }
-
-        [SerializeField]
-        private bool m_KeepTextSelectionVisible;
 
         /// <summary>
         /// Controls whether the original text is restored when pressing "ESC".
@@ -880,19 +820,8 @@ namespace TMPro
         [SerializeField]
         protected int m_LineLimit = 0;
 
-        /// <summary>
-        /// The type of input expected. See InputField.InputType.
-        /// </summary>
         public InputType inputType { get { return m_InputType; } set { if (SetPropertyUtility.SetStruct(ref m_InputType, value)) SetToCustom(); } }
 
-        /// <summary>
-        /// The TouchScreenKeyboard being used to edit the Input Field.
-        /// </summary>
-        public TouchScreenKeyboard touchScreenKeyboard { get { return m_SoftKeyboard; } }
-
-        /// <summary>
-        /// They type of mobile keyboard that will be used.
-        /// </summary>
         public TouchScreenKeyboardType keyboardType
         {
             get { return m_KeyboardType; }
@@ -903,14 +832,6 @@ namespace TMPro
             }
         }
 
-        /// <summary>
-        /// Determines if the keyboard is opened in alert mode.
-        /// </summary>
-        public bool isAlert;
-
-        /// <summary>
-        /// The type of validation to perform on a character
-        /// </summary>
         public CharacterValidation characterValidation { get { return m_CharacterValidation; } set { if (SetPropertyUtility.SetStruct(ref m_CharacterValidation, value)) SetToCustom(); } }
 
         /// <summary>
@@ -926,9 +847,6 @@ namespace TMPro
 
         public bool readOnly { get { return m_ReadOnly; } set { m_ReadOnly = value; } }
 
-        [SerializeField]
-        private bool m_ShouldActivateOnSelect = true;
-
         public bool richText { get { return m_RichText; } set { m_RichText = value; SetTextComponentRichTextMode(); } }
 
         // Derived property
@@ -940,7 +858,7 @@ namespace TMPro
 
         protected void ClampStringPos(ref int pos)
         {
-            if (pos <= 0)
+            if (pos < 0)
                 pos = 0;
             else if (pos > text.Length)
                 pos = text.Length;
@@ -948,19 +866,10 @@ namespace TMPro
 
         protected void ClampCaretPos(ref int pos)
         {
-            if (pos > m_TextComponent.textInfo.characterCount - 1)
-                pos = m_TextComponent.textInfo.characterCount - 1;
-
-            if (pos <= 0)
+            if (pos < 0)
                 pos = 0;
-        }
-
-        int ClampArrayIndex(int index)
-        {
-            if (index < 0)
-                return 0;
-
-            return index;
+            else if (pos > m_TextComponent.textInfo.characterCount - 1)
+                pos = m_TextComponent.textInfo.characterCount - 1;
         }
 
         /// <summary>
@@ -979,9 +888,6 @@ namespace TMPro
         private bool m_IsStringPositionDirty;
         private bool m_IsCaretPositionDirty;
         private bool m_forceRectTransformAdjustment;
-		
-		// Primary to track when an user presses on the X to close the keyboard in the HoloLens
-		private bool m_IsKeyboardBeingClosedInHoloLens = false;
 
         /// <summary>
         /// Get: Returns the focus position as thats the position that moves around even during selection.
@@ -989,8 +895,8 @@ namespace TMPro
         /// </summary>
         public int caretPosition
         {
-            get => caretSelectPositionInternal;
-            set { selectionAnchorPosition = value; selectionFocusPosition = value; UpdateStringIndexFromCaretPosition(); }
+            get { return caretSelectPositionInternal; }
+            set { selectionAnchorPosition = value; selectionFocusPosition = value; m_IsStringPositionDirty = true; }
         }
 
         /// <summary>
@@ -1040,8 +946,8 @@ namespace TMPro
         /// </summary>
         public int stringPosition
         {
-            get => stringSelectPositionInternal;
-            set { selectionStringAnchorPosition = value; selectionStringFocusPosition = value; UpdateCaretPositionFromStringIndex(); }
+            get { return stringSelectPositionInternal; }
+            set { selectionStringAnchorPosition = value; selectionStringFocusPosition = value; m_IsCaretPositionDirty = true; }
         }
 
 
@@ -1109,22 +1015,6 @@ namespace TMPro
         }
         #endif // if UNITY_EDITOR
 
-    	#if UNITY_ANDROID
-        protected override void Awake()
-        {
-            base.Awake();
-
-            if (s_IsQuestDeviceEvaluated)
-                return;
-
-            // Used for Oculus Quest 1 and 2 software keyboard regression.
-            // TouchScreenKeyboard.isInPlaceEditingAllowed is always returning true in these devices and would prevent the software keyboard from showing up if that value was used.
-            s_IsQuestDevice = SystemInfo.deviceModel == kOculusQuestDeviceModel;
-            s_IsQuestDeviceEvaluated = true;
-        }
-    	#endif // if UNITY_ANDROID
-
-
         protected override void OnEnable()
         {
             //Debug.Log("*** OnEnable() *** - " + this.name);
@@ -1133,8 +1023,6 @@ namespace TMPro
 
             if (m_Text == null)
                 m_Text = string.Empty;
-
-            m_IsApplePlatform = SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX || SystemInfo.operatingSystem.Contains("iOS") || SystemInfo.operatingSystem.Contains("tvOS");
 
             // Check if Input Field is driven by any layout components
             ILayoutController layoutController = GetComponent<ILayoutController>();
@@ -1202,12 +1090,8 @@ namespace TMPro
                 UpdateLabel();
             }
 
-            #if UNITY_2019_1_OR_NEWER
-            m_TouchKeyboardAllowsInPlaceEditing = TouchScreenKeyboard.isInPlaceEditingAllowed;
-            #endif
-
             // Subscribe to event fired when text object has been regenerated.
-            TextEventManager.TEXT_CHANGED_EVENT.Add(ON_TEXT_CHANGED);
+            TMPro_EventManager.TEXT_CHANGED_EVENT.Add(ON_TEXT_CHANGED);
         }
 
         protected override void OnDisable()
@@ -1237,7 +1121,7 @@ namespace TMPro
             m_Mesh = null;
 
             // Unsubscribe to event triggered when text object has been regenerated
-            TextEventManager.TEXT_CHANGED_EVENT.Remove(ON_TEXT_CHANGED);
+            TMPro_EventManager.TEXT_CHANGED_EVENT.Remove(ON_TEXT_CHANGED);
 
             base.OnDisable();
         }
@@ -1251,11 +1135,12 @@ namespace TMPro
         {
             bool isThisObject = obj == m_TextComponent;
 
-            if (isThisObject && !m_IsStringPositionDirty)
+            if (isThisObject)
             {
                 if (Application.isPlaying && compositionLength == 0)
                 {
-                    UpdateCaretPositionFromStringIndex();
+                    caretPositionInternal = GetCaretPositionFromStringIndex(stringPositionInternal);
+                    caretSelectPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
 
                     #if TMP_DEBUG_MODE
                     Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
@@ -1493,11 +1378,8 @@ namespace TMPro
 
         private bool InPlaceEditing()
         {
-            if (m_TouchKeyboardAllowsInPlaceEditing)
-                return true;
-
-            if (isUWP())
-                return !TouchScreenKeyboard.isSupported;
+            if (Application.platform == RuntimePlatform.WSAPlayerX86 || Application.platform == RuntimePlatform.WSAPlayerX64 || Application.platform == RuntimePlatform.WSAPlayerARM)
+                return !TouchScreenKeyboard.isSupported || m_TouchKeyboardAllowsInPlaceEditing;
 
             if (TouchScreenKeyboard.isSupported && shouldHideSoftKeyboard)
                 return true;
@@ -1506,50 +1388,6 @@ namespace TMPro
                 return false;
 
             return true;
-        }
-
-        // In-place editing can change state if a hardware keyboard becomes available or is hidden while the input field is activated.
-        private bool InPlaceEditingChanged()
-        {
-            #if UNITY_2019_1_OR_NEWER
-                return !s_IsQuestDevice && m_TouchKeyboardAllowsInPlaceEditing != TouchScreenKeyboard.isInPlaceEditingAllowed;
-            #else
-                return false;
-            #endif
-        }
-
-        // Returns true if the TouchScreenKeyboard should be used. On Android and Chrome OS, we only want to use the
-        // TouchScreenKeyboard if in-place editing is not allowed (i.e. when we do not have a hardware keyboard available).
-        private bool TouchScreenKeyboardShouldBeUsed()
-        {
-            RuntimePlatform platform = Application.platform;
-            switch (platform)
-            {
-                #if UNITY_2019_1_OR_NEWER
-                case RuntimePlatform.Android:
-                    if (s_IsQuestDevice)
-                        return TouchScreenKeyboard.isSupported;
-
-                    return !TouchScreenKeyboard.isInPlaceEditingAllowed;
-                #endif
-                default:
-                    return TouchScreenKeyboard.isSupported;
-            }
-        }
-
-        void UpdateKeyboardStringPosition()
-        {
-            // On iOS/tvOS we only update SoftKeyboard selection when we know that it might have changed by touch/pointer interactions with InputField
-            // Setting the TouchScreenKeyboard selection here instead of LateUpdate so that we wouldn't override
-            // TouchScreenKeyboard selection when it's changed with cmd+a/ctrl+a/arrow/etc. in the TouchScreenKeyboard
-            // This is only applicable for iOS/tvOS as we have instance of TouchScreenKeyboard even when external keyboard is connected
-            if (m_HideMobileInput && m_SoftKeyboard != null && m_SoftKeyboard.canSetSelection &&
-                (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.tvOS))
-            {
-                var selectionStart = Mathf.Min(caretSelectPositionInternal, caretPositionInternal);
-                var selectionLength = Mathf.Abs(caretSelectPositionInternal - caretPositionInternal);
-                m_SoftKeyboard.selection = new RangeInt(selectionStart, selectionLength);
-            }
         }
 
         void UpdateStringPositionFromKeyboard()
@@ -1609,11 +1447,6 @@ namespace TMPro
                 m_ShouldActivateNextUpdate = false;
             }
 
-            // If the device's state changed in a way that affects whether we should use a touchscreen keyboard or not,
-            // then deactivate the input field.
-            if (isFocused && InPlaceEditingChanged())
-                DeactivateInputField();
-
             // Handle double click to reset / deselect Input Field when ResetOnActivation is false.
             if (!isFocused && m_SelectionStillActive)
             {
@@ -1647,7 +1480,7 @@ namespace TMPro
                     }
 
                     // Release current selection of selected object is another Input Field
-                    if (m_KeepTextSelectionVisible == false && selectedObject.GetComponent<TMP_InputField>() != null)
+                    if (selectedObject.GetComponent<TMP_InputField>() != null)
                         ReleaseSelection();
 
                     return;
@@ -1724,31 +1557,21 @@ namespace TMPro
                     if (!m_ReadOnly)
                         text = m_SoftKeyboard.text;
 
-                    TouchScreenKeyboard.Status status = m_SoftKeyboard.status;
+                    if (m_SoftKeyboard.status == TouchScreenKeyboard.Status.LostFocus)
+                        SendTouchScreenKeyboardStatusChanged();
 
-                    // Special handling for UWP - Hololens which does not support Canceled status
-                    if (m_LastKeyCode != KeyCode.Return && status == TouchScreenKeyboard.Status.Done && isUWP())
-					{
-                        status = TouchScreenKeyboard.Status.Canceled;
-                        // The HoloLen's X button will not be acting as an ESC Key (TMBP-98)
-						m_IsKeyboardBeingClosedInHoloLens = true;
-					}
-
-                    switch (status)
+                    if (m_SoftKeyboard.status == TouchScreenKeyboard.Status.Canceled)
                     {
-                        case TouchScreenKeyboard.Status.LostFocus:
-                            SendTouchScreenKeyboardStatusChanged();
-                            break;
-                        case TouchScreenKeyboard.Status.Canceled:
-                            m_ReleaseSelection = true;
-                            m_WasCanceled = true;
-                            SendTouchScreenKeyboardStatusChanged();
-                            break;
-                        case TouchScreenKeyboard.Status.Done:
-                            m_ReleaseSelection = true;
-                            SendTouchScreenKeyboardStatusChanged();
-                            OnSubmit(null);
-                            break;
+                        m_ReleaseSelection = true;
+                        m_WasCanceled = true;
+                        SendTouchScreenKeyboardStatusChanged();
+                    }
+
+                    if (m_SoftKeyboard.status == TouchScreenKeyboard.Status.Done)
+                    {
+                        m_ReleaseSelection = true;
+                        OnSubmit(null);
+                        SendTouchScreenKeyboardStatusChanged();
                     }
                 }
 
@@ -1789,8 +1612,7 @@ namespace TMPro
                             return;
                         }
 
-                        // In the case of a Custom Validator, the user is expected to modify the m_Text where as such we do not append c.
-                        if (c != 0 && characterValidation != CharacterValidation.CustomValidator)
+                        if (c != 0)
                             m_Text += c;
                     }
 
@@ -1807,17 +1629,7 @@ namespace TMPro
                     SendOnValueChangedAndUpdateLabel();
                 }
             }
-            // On iOS/tvOS we always have TouchScreenKeyboard instance even when using external keyboard
-            // so we keep track of the caret position there
-            else if (m_HideMobileInput && m_SoftKeyboard != null && m_SoftKeyboard.canSetSelection &&
-                     Application.platform != RuntimePlatform.IPhonePlayer && Application.platform != RuntimePlatform.tvOS)
-            {
-                var selectionStart = Mathf.Min(caretSelectPositionInternal, caretPositionInternal);
-                var selectionLength = Mathf.Abs(caretSelectPositionInternal - caretPositionInternal);
-                m_SoftKeyboard.selection = new RangeInt(selectionStart, selectionLength);
-            }
-            else if (m_HideMobileInput && Application.platform == RuntimePlatform.Android ||
-                     m_SoftKeyboard.canSetSelection && (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.tvOS))
+            else if (m_HideMobileInput && Application.platform == RuntimePlatform.Android)
             {
                 UpdateStringPositionFromKeyboard();
             }
@@ -1900,7 +1712,6 @@ namespace TMPro
             if (m_DragPositionOutOfBounds && m_DragCoroutine == null)
                 m_DragCoroutine = StartCoroutine(MouseDragOutsideRect(eventData));
 
-            UpdateKeyboardStringPosition();
             eventData.Use();
 
             #if TMP_DEBUG_MODE
@@ -2088,7 +1899,6 @@ namespace TMPro
             }
 
             UpdateLabel();
-            UpdateKeyboardStringPosition();
             eventData.Use();
 
             #if TMP_DEBUG_MODE
@@ -2105,11 +1915,10 @@ namespace TMPro
         protected EditState KeyPressed(Event evt)
         {
             var currentEventModifiers = evt.modifiers;
-            bool ctrl = m_IsApplePlatform ? (currentEventModifiers & EventModifiers.Command) != 0 : (currentEventModifiers & EventModifiers.Control) != 0;
+            bool ctrl = SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX ? (currentEventModifiers & EventModifiers.Command) != 0 : (currentEventModifiers & EventModifiers.Control) != 0;
             bool shift = (currentEventModifiers & EventModifiers.Shift) != 0;
             bool alt = (currentEventModifiers & EventModifiers.Alt) != 0;
             bool ctrlOnly = ctrl && !alt && !shift;
-            m_LastKeyCode = evt.keyCode;
 
             switch (evt.keyCode)
             {
@@ -2249,11 +2058,11 @@ namespace TMPro
             char c = evt.character;
 
             // Don't allow return chars or tabulator key to be entered into single line fields.
-            if (!multiLine && (c == '\t' || c == '\r' || c == '\n'))
+            if (!multiLine && (c == '\t' || c == '\r' || c == 10))
                 return EditState.Continue;
 
             // Convert carriage return and end-of-text characters to newline.
-            if (c == '\r' || c == 3)
+            if (c == '\r' || (int)c == 3)
                 c = '\n';
 
             // Convert Shift Enter to Vertical tab
@@ -2316,47 +2125,57 @@ namespace TMPro
                 return;
 
             bool consumedEvent = false;
-            EditState editState = EditState.Continue;
+            EditState shouldContinue;
 
             while (Event.PopEvent(m_ProcessingEvent))
             {
                 //Debug.Log("Event: " + m_ProcessingEvent.ToString() + "  IsCompositionActive= " + m_IsCompositionActive + "  Composition Length: " + compositionLength);
 
-                EventType eventType = m_ProcessingEvent.rawType;
-
-                if (eventType == EventType.KeyUp)
-                    continue;
-
-                if (eventType == EventType.KeyDown)
+                switch (m_ProcessingEvent.rawType)
                 {
-                    consumedEvent = true;
+                    case EventType.KeyUp:
+                        // TODO: Figure out way to handle navigation during IME Composition.
 
-                    // Special handling on OSX which produces more events which need to be suppressed.
-                    if (m_IsCompositionActive && compositionLength == 0)
-                    {
-                        // Suppress other events related to navigation or termination of composition sequence.
-                        if (m_ProcessingEvent.character == 0 && m_ProcessingEvent.modifiers == EventModifiers.None)
-                            continue;
-                    }
-
-                    editState = KeyPressed(m_ProcessingEvent);
-                    if (editState == EditState.Finish)
-                    {
-                        if (!m_WasCanceled)
-                            SendOnSubmit();
-
-                        DeactivateInputField();
                         break;
-                    }
 
-                    m_IsTextComponentUpdateRequired = true;
-                    UpdateLabel();
 
-                    continue;
-                }
+                    case EventType.KeyDown:
+                        consumedEvent = true;
 
-                switch (eventType)
-                {
+                        // Special handling on OSX which produces more events which need to be suppressed.
+                        if (m_IsCompositionActive && compositionLength == 0)
+                        {
+                            //if (m_ProcessingEvent.keyCode == KeyCode.Backspace && m_ProcessingEvent.modifiers == EventModifiers.None)
+                            //{
+                            //    int eventCount = Event.GetEventCount();
+
+                            //    // Suppress all subsequent events
+                            //    for (int i = 0; i < eventCount; i++)
+                            //        Event.PopEvent(m_ProcessingEvent);
+
+                            //    break;
+                            //}
+
+                            // Suppress other events related to navigation or termination of composition sequence.
+                            if (m_ProcessingEvent.character == 0 && m_ProcessingEvent.modifiers == EventModifiers.None)
+                                break;
+                        }
+
+                        shouldContinue = KeyPressed(m_ProcessingEvent);
+                        if (shouldContinue == EditState.Finish)
+                        {
+                            if (!m_WasCanceled)
+                                SendOnSubmit();
+
+                            DeactivateInputField();
+                            break;
+                        }
+
+                        m_IsTextComponentUpdateRequired = true;
+                        UpdateLabel();
+
+                        break;
+
                     case EventType.ValidateCommand:
                     case EventType.ExecuteCommand:
                         switch (m_ProcessingEvent.commandName)
@@ -2368,7 +2187,6 @@ namespace TMPro
                         }
                         break;
                 }
-
             }
 
             if (consumedEvent)
@@ -2420,7 +2238,7 @@ namespace TMPro
             // Determine the current scroll position of the text within the viewport
             Rect viewportRect = m_TextViewport.rect;
 
-            float scrollPosition = (m_TextComponent.textInfo.lineInfo[0].ascender + m_TextComponent.margin.y + m_TextComponent.margin.w - viewportRect.yMax + m_TextComponent.rectTransform.anchoredPosition.y) / ( m_TextComponent.preferredHeight - viewportRect.height);
+            float scrollPosition = (m_TextComponent.textInfo.lineInfo[0].ascender - viewportRect.yMax + m_TextComponent.rectTransform.anchoredPosition.y) / ( m_TextComponent.preferredHeight - viewportRect.height);
 
             scrollPosition = (int)((scrollPosition * 1000) + 0.5f) / 1000.0f;
 
@@ -2497,11 +2315,7 @@ namespace TMPro
                 }
                 else
                 {
-                    // Special handling for <CR><LF>
-                    if (m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal].character == '\r' && m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal + 1].character == '\n')
-                        position = m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal + 1].index + m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal + 1].stringLength;
-                    else
-                        position = m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal].index + m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal].stringLength;
+                    position = m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal].index + m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal].stringLength;
                 }
 
             }
@@ -2573,10 +2387,6 @@ namespace TMPro
                     position = caretSelectPositionInternal < 1
                         ? m_TextComponent.textInfo.characterInfo[0].index
                         : m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal - 1].index;
-
-                    // Special handling for <CR><LF>
-                    if (position > 0 && m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal - 1].character == '\n' && m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal - 2].character == '\r')
-                        position = m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal - 2].index;
                 }
             }
 
@@ -3039,9 +2849,8 @@ namespace TMPro
             {
                 if (m_CaretPosition < m_CaretSelectPosition)
                 {
-                    int index = ClampArrayIndex(m_CaretSelectPosition - 1);
                     m_StringPosition = m_TextComponent.textInfo.characterInfo[m_CaretPosition].index;
-                    m_StringSelectPosition = m_TextComponent.textInfo.characterInfo[index].index + m_TextComponent.textInfo.characterInfo[index].stringLength;
+                    m_StringSelectPosition = m_TextComponent.textInfo.characterInfo[m_CaretSelectPosition - 1].index + m_TextComponent.textInfo.characterInfo[m_CaretSelectPosition - 1].stringLength;
 
                     m_Text = text.Remove(m_StringPosition, m_StringSelectPosition - m_StringPosition);
 
@@ -3050,8 +2859,7 @@ namespace TMPro
                 }
                 else
                 {
-                    int index = ClampArrayIndex(m_CaretPosition - 1);
-                    m_StringPosition = m_TextComponent.textInfo.characterInfo[index].index + m_TextComponent.textInfo.characterInfo[index].stringLength;
+                    m_StringPosition = m_TextComponent.textInfo.characterInfo[m_CaretPosition - 1].index + m_TextComponent.textInfo.characterInfo[m_CaretPosition - 1].stringLength;
                     m_StringSelectPosition = m_TextComponent.textInfo.characterInfo[m_CaretSelectPosition].index;
 
                     m_Text = text.Remove(m_StringSelectPosition, m_StringPosition - m_StringSelectPosition);
@@ -3105,10 +2913,6 @@ namespace TMPro
                     if (caretPositionInternal < m_TextComponent.textInfo.characterCount - 1)
                     {
                         int numberOfCharactersToRemove = m_TextComponent.textInfo.characterInfo[caretPositionInternal].stringLength;
-
-                        // Special handling for <CR><LF>
-                        if (m_TextComponent.textInfo.characterInfo[caretPositionInternal].character == '\r' && m_TextComponent.textInfo.characterInfo[caretPositionInternal + 1].character == '\n')
-                            numberOfCharactersToRemove += m_TextComponent.textInfo.characterInfo[caretPositionInternal + 1].stringLength;
 
                         // Adjust string position to skip any potential rich text tags.
                         int nextCharacterStringPosition = m_TextComponent.textInfo.characterInfo[caretPositionInternal].index;
@@ -3171,25 +2975,17 @@ namespace TMPro
                 {
                     if (caretPositionInternal > 0)
                     {
-                        int caretPositionIndex = caretPositionInternal - 1;
-                        int numberOfCharactersToRemove = m_TextComponent.textInfo.characterInfo[caretPositionIndex].stringLength;
-
-                        // Special handling for <CR><LR>
-                        if (caretPositionIndex > 0 && m_TextComponent.textInfo.characterInfo[caretPositionIndex].character == '\n' && m_TextComponent.textInfo.characterInfo[caretPositionIndex - 1].character == '\r')
-                        {
-                            numberOfCharactersToRemove += m_TextComponent.textInfo.characterInfo[caretPositionIndex - 1].stringLength;
-                            caretPositionIndex -= 1;
-                        }
+                        int numberOfCharactersToRemove = m_TextComponent.textInfo.characterInfo[caretPositionInternal - 1].stringLength;
 
                         // Delete the previous character
-                        m_Text = text.Remove(m_TextComponent.textInfo.characterInfo[caretPositionIndex].index, numberOfCharactersToRemove);
+                        m_Text = text.Remove(m_TextComponent.textInfo.characterInfo[caretPositionInternal - 1].index, numberOfCharactersToRemove);
 
                         // Get new adjusted string position
                         stringSelectPositionInternal = stringPositionInternal = caretPositionInternal < 1
                             ? m_TextComponent.textInfo.characterInfo[0].index
-                            : m_TextComponent.textInfo.characterInfo[caretPositionIndex].index;
+                            : m_TextComponent.textInfo.characterInfo[caretPositionInternal - 1].index;
 
-                        caretSelectPositionInternal = caretPositionInternal = caretPositionIndex;
+                        caretSelectPositionInternal = caretPositionInternal = caretPositionInternal - 1;
                     }
 
                     m_isLastKeyBackspace = true;
@@ -3221,7 +3017,7 @@ namespace TMPro
             {
                 char c = input[i];
 
-                if (c >= ' ' || c == '\t' || c == '\r' || c == '\n')
+                if (c >= ' ' || c == '\t' || c == '\r' || c == 10 || c == '\n')
                 {
                     Append(c);
                 }
@@ -3400,7 +3196,7 @@ namespace TMPro
 
         protected void SendTouchScreenKeyboardStatusChanged()
         {
-            if (m_SoftKeyboard != null && onTouchScreenKeyboardStatusChanged != null)
+            if (onTouchScreenKeyboardStatusChanged != null)
                 onTouchScreenKeyboardStatusChanged.Invoke(m_SoftKeyboard.status);
         }
 
@@ -3482,7 +3278,7 @@ namespace TMPro
                     }
                 }
 
-                if (m_IsTextComponentUpdateRequired || m_VerticalScrollbar && !(m_IsCaretPositionDirty && m_IsStringPositionDirty))
+                if (m_IsTextComponentUpdateRequired || m_VerticalScrollbar)
                 {
                     m_IsTextComponentUpdateRequired = false;
                     m_TextComponent.ForceMeshUpdate();
@@ -3668,20 +3464,6 @@ namespace TMPro
             return m_TextComponent.textInfo.characterInfo[caretPosition].index;
         }
 
-        void UpdateStringIndexFromCaretPosition()
-        {
-            stringPositionInternal = GetStringIndexFromCaretPosition(m_CaretPosition);
-            stringSelectPositionInternal = GetStringIndexFromCaretPosition(m_CaretSelectPosition);
-            m_IsStringPositionDirty = false;
-        }
-
-        void UpdateCaretPositionFromStringIndex()
-        {
-            caretPositionInternal = GetCaretPositionFromStringIndex(stringPositionInternal);
-            caretSelectPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
-            m_IsCaretPositionDirty = false;
-        }
-
 
         public void ForceLabelUpdate()
         {
@@ -3721,8 +3503,8 @@ namespace TMPro
                 return;
             #endif
 
-            // No need to draw a cursor on mobile as its handled by the devices keyboard with the exception of UWP.
-            if (InPlaceEditing() == false && isUWP() == false)
+            // No need to draw a cursor on mobile as its handled by the devices keyboard.
+            if (InPlaceEditing() == false)
                 return;
 
             if (m_CachedInputRenderer == null)
@@ -3772,10 +3554,18 @@ namespace TMPro
                 }
 
                 if (m_IsStringPositionDirty)
-                    UpdateStringIndexFromCaretPosition();
+                {
+                    stringPositionInternal = GetStringIndexFromCaretPosition(m_CaretPosition);
+                    stringSelectPositionInternal = GetStringIndexFromCaretPosition(m_CaretSelectPosition);
+                    m_IsStringPositionDirty = false;
+                }
 
                 if (m_IsCaretPositionDirty)
-                    UpdateCaretPositionFromStringIndex();
+                {
+                    caretPositionInternal = GetCaretPositionFromStringIndex(stringPositionInternal);
+                    caretSelectPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
+                    m_IsCaretPositionDirty = false;
+                }
 
                 if (!hasSelection)
                 {
@@ -3784,7 +3574,7 @@ namespace TMPro
                 }
                 else
                 {
-                    GenerateHighlight(helper, Vector2.zero);
+                    GenerateHightlight(helper, Vector2.zero);
                     SendOnTextSelection();
                 }
 
@@ -3803,14 +3593,16 @@ namespace TMPro
                 CreateCursorVerts();
             }
 
+            float width = m_CaretWidth;
+
             // TODO: Optimize to only update the caret position when needed.
 
             Vector2 startPosition = Vector2.zero;
             float height = 0;
             TMP_CharacterInfo currentCharacter;
 
-            // Make sure caret position does not exceed characterInfo array size or less than zero.
-            if (caretPositionInternal >= m_TextComponent.textInfo.characterInfo.Length || caretPositionInternal < 0)
+            // Make sure caret position does not exceed characterInfo array size.
+            if (caretPositionInternal >= m_TextComponent.textInfo.characterInfo.Length)
                 return;
 
             int currentLine = m_TextComponent.textInfo.characterInfo[caretPositionInternal].lineNumber;
@@ -3838,7 +3630,7 @@ namespace TMPro
 
             }
 
-            if (m_SoftKeyboard != null && compositionLength == 0)
+            if (m_SoftKeyboard != null)
             {
                 int selectionStart = m_StringPosition;
                 int softKeyboardStringLength = m_SoftKeyboard.text == null ? 0 : m_SoftKeyboard.text.Length;
@@ -3862,11 +3654,8 @@ namespace TMPro
             float top = startPosition.y + height;
             float bottom = top - height;
 
-            // Compute the width of the caret which is based on the line height of the primary font asset.
-            //float width = m_CaretWidth;
-            FontAsset fontAsset = m_TextComponent.font;
-            float baseScale = (m_TextComponent.fontSize / fontAsset.m_FaceInfo.pointSize * fontAsset.m_FaceInfo.scale);
-            float width = m_CaretWidth * fontAsset.faceInfo.lineHeight * baseScale * 0.05f;
+            // Minor tweak to address caret potentially being too thin based on canvas scaler values.
+            float scale = m_TextComponent.canvas.scaleFactor;
 
             m_CursorVerts[0].position = new Vector3(startPosition.x, bottom, 0.0f);
             m_CursorVerts[1].position = new Vector3(startPosition.x, top, 0.0f);
@@ -3927,7 +3716,7 @@ namespace TMPro
         }
 
 
-        private void GenerateHighlight(VertexHelper vbo, Vector2 roundingOffset)
+        private void GenerateHightlight(VertexHelper vbo, Vector2 roundingOffset)
         {
             // Update Masking Region
             UpdateMaskRegions();
@@ -3938,14 +3727,10 @@ namespace TMPro
 
             TMP_TextInfo textInfo = m_TextComponent.textInfo;
 
-            // Return if character count is zero as there is nothing to highlight.
-            if (textInfo.characterCount == 0)
-                return;
-
             m_CaretPosition = GetCaretPositionFromStringIndex(stringPositionInternal);
             m_CaretSelectPosition = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
 
-            if (m_SoftKeyboard != null && compositionLength == 0)
+            if (m_SoftKeyboard != null)
             {
                 int stringPosition = m_CaretPosition < m_CaretSelectPosition ? textInfo.characterInfo[m_CaretPosition].index : textInfo.characterInfo[m_CaretSelectPosition].index;
                 int length = m_CaretPosition < m_CaretSelectPosition ? stringSelectPositionInternal - stringPosition : stringPositionInternal - stringPosition;
@@ -4002,7 +3787,7 @@ namespace TMPro
                     TMP_CharacterInfo endCharInfo = textInfo.characterInfo[currentChar];
 
                     // Extra check to handle Carriage Return
-                    if (currentChar > 0 && endCharInfo.character == '\n' && textInfo.characterInfo[currentChar - 1].character == '\r')
+                    if (currentChar > 0 && endCharInfo.character == 10 && textInfo.characterInfo[currentChar - 1].character == 13)
                         endCharInfo = textInfo.characterInfo[currentChar - 1];
 
                     Vector2 startPosition = new Vector2(startCharInfo.origin, textInfo.lineInfo[currentLineIndex].ascender);
@@ -4107,8 +3892,7 @@ namespace TMPro
                 float anchoredPositionX = m_TextComponent.rectTransform.anchoredPosition.x;
 
                 float firstCharPosition = localPosition.x + textViewportLocalPosition.x + textComponentLocalPosition.x + m_TextComponent.textInfo.characterInfo[0].origin - m_TextComponent.margin.x;
-                int lastCharacterIndex = ClampArrayIndex(m_TextComponent.textInfo.characterCount - 1);
-                float lastCharPosition = localPosition.x + textViewportLocalPosition.x + textComponentLocalPosition.x + m_TextComponent.textInfo.characterInfo[lastCharacterIndex].origin + m_TextComponent.margin.z + m_CaretWidth;
+                float lastCharPosition = localPosition.x + textViewportLocalPosition.x + textComponentLocalPosition.x + m_TextComponent.textInfo.characterInfo[m_TextComponent.textInfo.characterCount - 1].origin + m_TextComponent.margin.z + m_CaretWidth;
 
                 if (anchoredPositionX > 0.0001f && firstCharPosition > viewportWSRect.xMin)
                 {
@@ -4289,13 +4073,7 @@ namespace TMPro
             if (EventSystem.current.currentSelectedGameObject != gameObject)
                 EventSystem.current.SetSelectedGameObject(gameObject);
 
-            // Cache the value of isInPlaceEditingAllowed, because on UWP this involves calling into native code
-            // The value only needs to be updated once when the TouchKeyboard is opened.
-            #if UNITY_2019_1_OR_NEWER
-            m_TouchKeyboardAllowsInPlaceEditing = !s_IsQuestDevice && TouchScreenKeyboard.isInPlaceEditingAllowed;
-            #endif
-
-            if (TouchScreenKeyboardShouldBeUsed() && shouldHideSoftKeyboard == false)
+            if (TouchScreenKeyboard.isSupported && shouldHideSoftKeyboard == false)
             {
                 if (inputSystem != null && inputSystem.touchSupported)
                 {
@@ -4305,24 +4083,30 @@ namespace TMPro
                 if (shouldHideSoftKeyboard == false && m_ReadOnly == false)
                 {
                     m_SoftKeyboard = (inputType == InputType.Password) ?
-                        TouchScreenKeyboard.Open(m_Text, keyboardType, false, multiLine, true, isAlert, "", characterLimit) :
-                        TouchScreenKeyboard.Open(m_Text, keyboardType, inputType == InputType.AutoCorrect, multiLine, false, isAlert, "", characterLimit);
+                        TouchScreenKeyboard.Open(m_Text, keyboardType, false, multiLine, true, false, "", characterLimit) :
+                        TouchScreenKeyboard.Open(m_Text, keyboardType, inputType == InputType.AutoCorrect, multiLine, false, false, "", characterLimit);
 
                     OnFocus();
 
                     // Opening the soft keyboard sets its selection to the end of the text.
                     // As such, we set the selection to match the Input Field's internal selection.
-                    if (m_SoftKeyboard != null && m_SoftKeyboard.canSetSelection)
+                    if (m_SoftKeyboard != null)
                     {
                         int length = stringPositionInternal < stringSelectPositionInternal ? stringSelectPositionInternal - stringPositionInternal : stringPositionInternal - stringSelectPositionInternal;
                         m_SoftKeyboard.selection = new RangeInt(stringPositionInternal < stringSelectPositionInternal ? stringPositionInternal : stringSelectPositionInternal, length);
                     }
                     //}
                 }
+
+                // Cache the value of isInPlaceEditingAllowed, because on UWP this involves calling into native code
+                // The value only needs to be updated once when the TouchKeyboard is opened.
+                #if UNITY_2019_1_OR_NEWER
+                m_TouchKeyboardAllowsInPlaceEditing = TouchScreenKeyboard.isInPlaceEditingAllowed;
+                #endif
             }
             else
             {
-                if (!TouchScreenKeyboardShouldBeUsed() && m_ReadOnly == false && inputSystem != null)
+                if (!TouchScreenKeyboard.isSupported && m_ReadOnly == false && inputSystem != null)
                     inputSystem.imeCompositionMode = IMECompositionMode.On;
 
                 OnFocus();
@@ -4342,8 +4126,7 @@ namespace TMPro
             base.OnSelect(eventData);
             SendOnFocus();
 
-            if (shouldActivateOnSelect)
-                ActivateInputField();
+            ActivateInputField();
         }
 
         public virtual void OnPointerClick(PointerEventData eventData)
@@ -4389,7 +4172,7 @@ namespace TMPro
 
             if (m_TextComponent != null && IsInteractable())
             {
-                if (m_WasCanceled && m_RestoreOriginalTextOnEscape && !m_IsKeyboardBeingClosedInHoloLens)
+                if (m_WasCanceled && m_RestoreOriginalTextOnEscape)
                     text = m_OriginalText;
 
                 if (m_SoftKeyboard != null)
@@ -4400,7 +4183,7 @@ namespace TMPro
 
                 m_SelectionStillActive = true;
 
-                if (m_ResetOnDeActivation || m_ReleaseSelection || clearSelection)
+                if (m_ResetOnDeActivation || m_ReleaseSelection)
                 {
                     //m_StringPosition = m_StringSelectPosition = 0;
                     //m_CaretPosition = m_CaretSelectPosition = 0;
@@ -4412,8 +4195,6 @@ namespace TMPro
 
                 if (inputSystem != null)
                     inputSystem.imeCompositionMode = IMECompositionMode.Auto;
-
-				m_IsKeyboardBeingClosedInHoloLens = false;
             }
 
             MarkGeometryAsDirty();
@@ -4538,9 +4319,9 @@ namespace TMPro
                 return;
 
             if (multiLine)
-                m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+                m_TextComponent.enableWordWrapping = true;
             else
-                m_TextComponent.textWrappingMode = TextWrappingModes.PreserveWhitespaceNoWrap;
+                m_TextComponent.enableWordWrapping = false;
         }
 
         // Control Rich Text option on the text component.
@@ -4686,9 +4467,7 @@ namespace TMPro
         {
             TMP_Text placeholderTextComponent = m_Placeholder as TMP_Text;
 
-            if (placeholderTextComponent != null)
-                placeholderTextComponent.fontSize = pointSize;
-
+            if (placeholderTextComponent != null) placeholderTextComponent.fontSize = pointSize;
             textComponent.fontSize = pointSize;
         }
 
@@ -4696,14 +4475,13 @@ namespace TMPro
         /// Function to conveniently set the Font Asset of both Placeholder and Input Field text object.
         /// </summary>
         /// <param name="fontAsset"></param>
-        public void SetGlobalFontAsset(FontAsset fontAsset)
+        public void SetGlobalFontAsset(TMP_FontAsset fontAsset)
         {
             TMP_Text placeholderTextComponent = m_Placeholder as TMP_Text;
 
-            if (placeholderTextComponent != null)
-                placeholderTextComponent.font = fontAsset;
-
+            if (placeholderTextComponent != null) placeholderTextComponent.font = fontAsset;
             textComponent.font = fontAsset;
+
         }
 
     }

@@ -1,9 +1,11 @@
-﻿using System;
+﻿using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.TextCore;
+using UnityEngine.TextCore.LowLevel;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.TextCore.Text;
 
 
 namespace TMPro
@@ -79,11 +81,9 @@ namespace TMPro
     {
         public string sourceFontFileName;
         public string sourceFontFileGUID;
-        public int faceIndex;
         public int pointSizeSamplingMode;
         public int pointSize;
         public int padding;
-        public int paddingMode;
         public int packingMode;
         public int atlasWidth;
         public int atlasHeight;
@@ -100,11 +100,9 @@ namespace TMPro
         {
             this.sourceFontFileName = string.Empty;
             this.sourceFontFileGUID = sourceFontFileGUID;
-            this.faceIndex = 0;
             this.pointSize = pointSize;
             this.pointSizeSamplingMode = pointSizeSamplingMode;
             this.padding = padding;
-            this.paddingMode = 2;
             this.packingMode = packingMode;
             this.atlasWidth = atlasWidth;
             this.atlasHeight = atlasHeight;
@@ -126,8 +124,8 @@ namespace TMPro
     [Serializable]
     public struct TMP_FontWeightPair
     {
-        public FontAsset regularTypeface;
-        public FontAsset italicTypeface;
+        public TMP_FontAsset regularTypeface;
+        public TMP_FontAsset italicTypeface;
     }
 
 
@@ -230,7 +228,7 @@ namespace TMPro
 
         /// <summary>
         /// Determines if the Character Spacing property of the text object will affect the kerning pair.
-        /// This is mostly relevant when using Diacritical marks to prevent Character Spacing from altering the spacing.
+        /// This is mostly relevant when using Diacritical marks to prevent Character Spacing from altering the 
         /// </summary>
         public bool ignoreSpacingAdjustments
         {
@@ -377,7 +375,7 @@ namespace TMPro
         /// <param name="unicode">The character to find.</param>
         /// <param name="character">out parameter containing the glyph for the specified character (if found).</param>
         /// <returns></returns>
-        public static FontAsset SearchForCharacter(FontAsset font, uint unicode, out Character character)
+        public static TMP_FontAsset SearchForCharacter(TMP_FontAsset font, uint unicode, out TMP_Character character)
         {
             if (k_searchedFontAssets == null)
                 k_searchedFontAssets = new List<int>();
@@ -395,13 +393,13 @@ namespace TMPro
         /// <param name="unicode"></param>
         /// <param name="character"></param>
         /// <returns></returns>
-        public static FontAsset SearchForCharacter(List<FontAsset> fonts, uint unicode, out Character character)
+        public static TMP_FontAsset SearchForCharacter(List<TMP_FontAsset> fonts, uint unicode, out TMP_Character character)
         {
             return SearchForCharacterInternal(fonts, unicode, out character);
         }
 
 
-        private static FontAsset SearchForCharacterInternal(FontAsset font, uint unicode, out Character character)
+        private static TMP_FontAsset SearchForCharacterInternal(TMP_FontAsset font, uint unicode, out TMP_Character character)
         {
             character = null;
 
@@ -409,18 +407,13 @@ namespace TMPro
 
             if (font.characterLookupTable.TryGetValue(unicode, out character))
             {
-                if (character.textAsset != null)
-                    return font;
-
-                // Remove character from lookup table
-                font.characterLookupTable.Remove(unicode);
+                return font;
             }
-
-            if (font.fallbackFontAssetTable != null && font.fallbackFontAssetTable.Count > 0)
+            else if (font.fallbackFontAssetTable != null && font.fallbackFontAssetTable.Count > 0)
             {
                 for (int i = 0; i < font.fallbackFontAssetTable.Count && character == null; i++)
                 {
-                    FontAsset temp = font.fallbackFontAssetTable[i];
+                    TMP_FontAsset temp = font.fallbackFontAssetTable[i];
                     if (temp == null) continue;
 
                     int id = temp.GetInstanceID();
@@ -442,7 +435,7 @@ namespace TMPro
         }
 
 
-        private static FontAsset SearchForCharacterInternal(List<FontAsset> fonts, uint unicode, out Character character)
+        private static TMP_FontAsset SearchForCharacterInternal(List<TMP_FontAsset> fonts, uint unicode, out TMP_Character character)
         {
             character = null;
 
@@ -450,7 +443,7 @@ namespace TMPro
             {
                 for (int i = 0; i < fonts.Count; i++)
                 {
-                    FontAsset fontAsset = SearchForCharacterInternal(fonts[i], unicode, out character);
+                    TMP_FontAsset fontAsset = SearchForCharacterInternal(fonts[i], unicode, out character);
 
                     if (fontAsset != null)
                         return fontAsset;

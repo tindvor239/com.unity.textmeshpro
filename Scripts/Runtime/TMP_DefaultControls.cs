@@ -37,17 +37,10 @@ namespace TMPro
 
         private static GameObject CreateUIElementRoot(string name, Vector2 size)
         {
-            GameObject root;
-
-            #if UNITY_EDITOR
-            root = ObjectFactory.CreateGameObject(name);
-            #else
-            root = new GameObject(name);
-            #endif
-
-            RectTransform rectTransform = root.AddComponent<RectTransform>();
+            GameObject child = new GameObject(name);
+            RectTransform rectTransform = child.AddComponent<RectTransform>();
             rectTransform.sizeDelta = size;
-            return root;
+            return child;
         }
 
         static GameObject CreateUIObject(string name, GameObject parent)
@@ -189,8 +182,9 @@ namespace TMPro
             TMP_InputField inputField = root.AddComponent<TMP_InputField>();
             SetDefaultColorTransitionValues(inputField);
 
+            // Use UI.Mask for Unity 5.0 - 5.1 and 2D RectMask for Unity 5.2 and up
             RectMask2D rectMask = textArea.AddComponent<RectMask2D>();
-            #if UNITY_2019_4_OR_NEWER
+            #if UNITY_2019_4_OR_NEWER && !UNITY_2019_4_1 && !UNITY_2019_4_2 && !UNITY_2019_4_3 && !UNITY_2019_4_4 && !UNITY_2019_4_5 && !UNITY_2019_4_6 && !UNITY_2019_4_7 && !UNITY_2019_4_8 && !UNITY_2019_4_9 && !UNITY_2019_4_10 && !UNITY_2019_4_11
             rectMask.padding = new Vector4(-8, -5, -8, -5);
             #endif
 
@@ -204,7 +198,7 @@ namespace TMPro
 
             TextMeshProUGUI text = childText.AddComponent<TextMeshProUGUI>();
             text.text = "";
-            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.enableWordWrapping = false;
             text.extraPadding = true;
             text.richText = true;
             SetDefaultTextValues(text);
@@ -213,7 +207,7 @@ namespace TMPro
             placeholder.text = "Enter text...";
             placeholder.fontSize = 14;
             placeholder.fontStyle = FontStyles.Italic;
-            placeholder.textWrappingMode = TextWrappingModes.NoWrap;
+            placeholder.enableWordWrapping = false;
             placeholder.extraPadding = true;
 
             // Make placeholder color half as opaque as normal text color.

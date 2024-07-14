@@ -277,7 +277,6 @@ namespace TMPro
 
             itemStack[0] = item;
             index = 1;
-            m_Count = 1;
         }
 
 
@@ -302,11 +301,9 @@ namespace TMPro
         public T Remove()
         {
             index -= 1;
-            m_Count -= 1;
 
             if (index <= 0)
             {
-                m_Count = 0;
                 index = 1;
                 return itemStack[0];
 

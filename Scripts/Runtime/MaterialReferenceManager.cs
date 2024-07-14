@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using UnityEngine.TextCore.Text;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 
 namespace TMPro
@@ -12,9 +12,9 @@ namespace TMPro
 
         // Dictionaries used to track Asset references.
         private Dictionary<int, Material> m_FontMaterialReferenceLookup = new Dictionary<int, Material>();
-        private Dictionary<int, FontAsset> m_FontAssetReferenceLookup = new Dictionary<int, FontAsset>();
-        private Dictionary<int, SpriteAsset> m_SpriteAssetReferenceLookup = new Dictionary<int, SpriteAsset>();
-        private Dictionary<int, TextColorGradient> m_ColorGradientReferenceLookup = new Dictionary<int, TextColorGradient>();
+        private Dictionary<int, TMP_FontAsset> m_FontAssetReferenceLookup = new Dictionary<int, TMP_FontAsset>();
+        private Dictionary<int, TMP_SpriteAsset> m_SpriteAssetReferenceLookup = new Dictionary<int, TMP_SpriteAsset>();
+        private Dictionary<int, TMP_ColorGradient> m_ColorGradientReferenceLookup = new Dictionary<int, TMP_ColorGradient>();
 
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace TMPro
         /// Add new font asset reference to dictionary.
         /// </summary>
         /// <param name="fontAsset"></param>
-        public static void AddFontAsset(FontAsset fontAsset)
+        public static void AddFontAsset(TMP_FontAsset fontAsset)
         {
             MaterialReferenceManager.instance.AddFontAssetInternal(fontAsset);
         }
@@ -45,7 +45,7 @@ namespace TMPro
         ///  Add new Font Asset reference to dictionary.
         /// </summary>
         /// <param name="fontAsset"></param>
-        private void AddFontAssetInternal(FontAsset fontAsset)
+        private void AddFontAssetInternal(TMP_FontAsset fontAsset)
         {
             if (m_FontAssetReferenceLookup.ContainsKey(fontAsset.hashCode)) return;
 
@@ -63,7 +63,7 @@ namespace TMPro
         /// </summary>
         /// <param name="hashCode"></param>
         /// <param name="spriteAsset"></param>
-        public static void AddSpriteAsset(SpriteAsset spriteAsset)
+        public static void AddSpriteAsset(TMP_SpriteAsset spriteAsset)
         {
             MaterialReferenceManager.instance.AddSpriteAssetInternal(spriteAsset);
         }
@@ -73,7 +73,7 @@ namespace TMPro
         /// </summary>
         /// <param name="hashCode"></param>
         /// <param name="spriteAsset"></param>
-        private void AddSpriteAssetInternal(SpriteAsset spriteAsset)
+        private void AddSpriteAssetInternal(TMP_SpriteAsset spriteAsset)
         {
             if (m_SpriteAssetReferenceLookup.ContainsKey(spriteAsset.hashCode)) return;
 
@@ -89,7 +89,7 @@ namespace TMPro
         /// </summary>
         /// <param name="hashCode"></param>
         /// <param name="spriteAsset"></param>
-        public static void AddSpriteAsset(int hashCode, SpriteAsset spriteAsset)
+        public static void AddSpriteAsset(int hashCode, TMP_SpriteAsset spriteAsset)
         {
             MaterialReferenceManager.instance.AddSpriteAssetInternal(hashCode, spriteAsset);
         }
@@ -99,7 +99,7 @@ namespace TMPro
         /// </summary>
         /// <param name="hashCode"></param>
         /// <param name="spriteAsset"></param>
-        private void AddSpriteAssetInternal(int hashCode, SpriteAsset spriteAsset)
+        private void AddSpriteAssetInternal(int hashCode, TMP_SpriteAsset spriteAsset)
         {
             if (m_SpriteAssetReferenceLookup.ContainsKey(hashCode)) return;
 
@@ -110,8 +110,7 @@ namespace TMPro
             m_FontMaterialReferenceLookup.Add(hashCode, spriteAsset.material);
 
             // Compatibility check
-            if (spriteAsset.hashCode == 0)
-                spriteAsset.hashCode = hashCode;
+            if (spriteAsset.hashCode == 0) spriteAsset.hashCode = hashCode;
         }
 
 
@@ -143,7 +142,7 @@ namespace TMPro
         /// </summary>
         /// <param name="hashCode"></param>
         /// <param name="spriteAsset"></param>
-        public static void AddColorGradientPreset(int hashCode, TextColorGradient spriteAsset)
+        public static void AddColorGradientPreset(int hashCode, TMP_ColorGradient spriteAsset)
         {
             MaterialReferenceManager.instance.AddColorGradientPreset_Internal(hashCode, spriteAsset);
         }
@@ -153,7 +152,7 @@ namespace TMPro
         /// </summary>
         /// <param name="hashCode"></param>
         /// <param name="spriteAsset"></param>
-        private void AddColorGradientPreset_Internal(int hashCode, TextColorGradient spriteAsset)
+        private void AddColorGradientPreset_Internal(int hashCode, TMP_ColorGradient spriteAsset)
         {
             if (m_ColorGradientReferenceLookup.ContainsKey(hashCode)) return;
 
@@ -245,7 +244,7 @@ namespace TMPro
         /// </summary>
         /// <param name="font"></param>
         /// <returns></returns>
-        public bool Contains(FontAsset font)
+        public bool Contains(TMP_FontAsset font)
         {
             return m_FontAssetReferenceLookup.ContainsKey(font.hashCode);
         }
@@ -256,7 +255,7 @@ namespace TMPro
         /// </summary>
         /// <param name="font"></param>
         /// <returns></returns>
-        public bool Contains(SpriteAsset sprite)
+        public bool Contains(TMP_SpriteAsset sprite)
         {
             return m_FontAssetReferenceLookup.ContainsKey(sprite.hashCode);
         }
@@ -269,7 +268,7 @@ namespace TMPro
         /// <param name="hashCode"></param>
         /// <param name="fontAsset"></param>
         /// <returns></returns>
-        public static bool TryGetFontAsset(int hashCode, out FontAsset fontAsset)
+        public static bool TryGetFontAsset(int hashCode, out TMP_FontAsset fontAsset)
         {
             return MaterialReferenceManager.instance.TryGetFontAssetInternal(hashCode, out fontAsset);
         }
@@ -280,7 +279,7 @@ namespace TMPro
         /// <param name="hashCode"></param>
         /// <param name="fontAsset"></param>
         /// <returns></returns>
-        private bool TryGetFontAssetInternal(int hashCode, out FontAsset fontAsset)
+        private bool TryGetFontAssetInternal(int hashCode, out TMP_FontAsset fontAsset)
         {
             fontAsset = null;
 
@@ -295,7 +294,7 @@ namespace TMPro
         /// <param name="hashCode"></param>
         /// <param name="spriteAsset"></param>
         /// <returns></returns>
-        public static bool TryGetSpriteAsset(int hashCode, out SpriteAsset spriteAsset)
+        public static bool TryGetSpriteAsset(int hashCode, out TMP_SpriteAsset spriteAsset)
         {
             return MaterialReferenceManager.instance.TryGetSpriteAssetInternal(hashCode, out spriteAsset);
         }
@@ -306,7 +305,7 @@ namespace TMPro
         /// <param name="hashCode"></param>
         /// <param name="fontAsset"></param>
         /// <returns></returns>
-        private bool TryGetSpriteAssetInternal(int hashCode, out SpriteAsset spriteAsset)
+        private bool TryGetSpriteAssetInternal(int hashCode, out TMP_SpriteAsset spriteAsset)
         {
             spriteAsset = null;
 
@@ -320,7 +319,7 @@ namespace TMPro
         /// <param name="hashCode"></param>
         /// <param name="gradientPreset"></param>
         /// <returns></returns>
-        public static bool TryGetColorGradientPreset(int hashCode, out TextColorGradient gradientPreset)
+        public static bool TryGetColorGradientPreset(int hashCode, out TMP_ColorGradient gradientPreset)
         {
             return MaterialReferenceManager.instance.TryGetColorGradientPresetInternal(hashCode, out gradientPreset);
         }
@@ -331,7 +330,7 @@ namespace TMPro
         /// <param name="hashCode"></param>
         /// <param name="fontAsset"></param>
         /// <returns></returns>
-        private bool TryGetColorGradientPresetInternal(int hashCode, out TextColorGradient gradientPreset)
+        private bool TryGetColorGradientPresetInternal(int hashCode, out TMP_ColorGradient gradientPreset)
         {
             gradientPreset = null;
 
@@ -499,8 +498,8 @@ namespace TMPro
     {
 
         public int index;
-        public FontAsset fontAsset;
-        public SpriteAsset spriteAsset;
+        public TMP_FontAsset fontAsset;
+        public TMP_SpriteAsset spriteAsset;
         public Material material;
         public bool isDefaultMaterial;
         public bool isFallbackMaterial;
@@ -517,13 +516,13 @@ namespace TMPro
         /// <param name="spriteAsset"></param>
         /// <param name="material"></param>
         /// <param name="padding"></param>
-        public MaterialReference(int index, FontAsset fontAsset, SpriteAsset spriteAsset, Material material, float padding)
+        public MaterialReference(int index, TMP_FontAsset fontAsset, TMP_SpriteAsset spriteAsset, Material material, float padding)
         {
             this.index = index;
             this.fontAsset = fontAsset;
             this.spriteAsset = spriteAsset;
             this.material = material;
-            this.isDefaultMaterial = material.GetInstanceID() == fontAsset.material.GetInstanceID();
+            this.isDefaultMaterial = material.GetInstanceID() == fontAsset.material.GetInstanceID() ? true : false;
             this.isFallbackMaterial = false;
             this.fallbackMaterial = null;
             this.padding = padding;
@@ -537,7 +536,7 @@ namespace TMPro
         /// <param name="materialReferences"></param>
         /// <param name="fontAsset"></param>
         /// <returns></returns>
-        public static bool Contains(MaterialReference[] materialReferences, FontAsset fontAsset)
+        public static bool Contains(MaterialReference[] materialReferences, TMP_FontAsset fontAsset)
         {
             int id = fontAsset.GetInstanceID();
 
@@ -559,7 +558,7 @@ namespace TMPro
         /// <param name="materialReferences"></param>
         /// <param name="materialReferenceIndexLookup"></param>
         /// <returns></returns>
-        public static int AddMaterialReference(Material material, FontAsset fontAsset, ref MaterialReference[] materialReferences, Dictionary<int, int> materialReferenceIndexLookup)
+        public static int AddMaterialReference(Material material, TMP_FontAsset fontAsset, ref MaterialReference[] materialReferences, Dictionary<int, int> materialReferenceIndexLookup)
         {
             int materialID = material.GetInstanceID();
             int index;
@@ -579,10 +578,12 @@ namespace TMPro
             materialReferences[index].fontAsset = fontAsset;
             materialReferences[index].spriteAsset = null;
             materialReferences[index].material = material;
-            materialReferences[index].isDefaultMaterial = materialID == fontAsset.material.GetInstanceID();
+            materialReferences[index].isDefaultMaterial = materialID == fontAsset.material.GetInstanceID() ? true : false;
+            //materialReferences[index].padding = 0;
             materialReferences[index].referenceCount = 0;
 
             return index;
+
         }
 
 
@@ -594,7 +595,7 @@ namespace TMPro
         /// <param name="materialReferences"></param>
         /// <param name="materialReferenceIndexLookup"></param>
         /// <returns></returns>
-        public static int AddMaterialReference(Material material, SpriteAsset spriteAsset, ref MaterialReference[] materialReferences, Dictionary<int, int> materialReferenceIndexLookup)
+        public static int AddMaterialReference(Material material, TMP_SpriteAsset spriteAsset, ref MaterialReference[] materialReferences, Dictionary<int, int> materialReferenceIndexLookup)
         {
             int materialID = material.GetInstanceID();
             int index;
@@ -615,6 +616,7 @@ namespace TMPro
             materialReferences[index].spriteAsset = spriteAsset;
             materialReferences[index].material = material;
             materialReferences[index].isDefaultMaterial = true;
+            //materialReferences[index].padding = 0;
             materialReferences[index].referenceCount = 0;
 
             return index;

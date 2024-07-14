@@ -1,6 +1,6 @@
-﻿using System;
-using UnityEngine;
-using UnityEngine.TextCore.Text;
+﻿using UnityEngine;
+using System;
+using System.Collections;
 using Object = UnityEngine.Object;
 
 #pragma warning disable 0109 // Disable warning due to conflict between Unity Editor DLL and Runtime DLL related to .renderer property being available in one but not the other.
@@ -14,25 +14,25 @@ namespace TMPro
         /// <summary>
         /// The TMP Font Asset assigned to this sub text object.
         /// </summary>
-        public FontAsset fontAsset
+        public TMP_FontAsset fontAsset
         {
             get { return m_fontAsset; }
             set { m_fontAsset = value; }
         }
         [SerializeField]
-        private FontAsset m_fontAsset;
+        private TMP_FontAsset m_fontAsset;
 
 
         /// <summary>
         /// The TMP Sprite Asset assigned to this sub text object.
         /// </summary>
-        public SpriteAsset spriteAsset
+        public TMP_SpriteAsset spriteAsset
         {
             get { return m_spriteAsset; }
             set { m_spriteAsset = value; }
         }
         [SerializeField]
-        private SpriteAsset m_spriteAsset;
+        private TMP_SpriteAsset m_spriteAsset;
 
 
         /// <summary>
@@ -234,19 +234,17 @@ namespace TMPro
 
         public static TMP_SubMesh AddSubTextObject(TextMeshPro textComponent, MaterialReference materialReference)
         {
-            GameObject go = new GameObject();
-            go.hideFlags = TMP_Settings.hideSubTextObjects ? HideFlags.HideAndDontSave : HideFlags.DontSave;
+            GameObject go = new GameObject("TMP SubMesh [" + materialReference.material.name + "]", typeof(TMP_SubMesh));
+            go.hideFlags = HideFlags.DontSave;
+
+            TMP_SubMesh subMesh = go.GetComponent<TMP_SubMesh>();
+
             go.transform.SetParent(textComponent.transform, false);
             go.transform.localPosition = Vector3.zero;
             go.transform.localRotation = Quaternion.identity;
             go.transform.localScale = Vector3.one;
             go.layer = textComponent.gameObject.layer;
-            
-            #if UNITY_EDITOR
-            go.name = materialReference.material == null ? "TMP SubMesh" : "TMP SubMesh [" + materialReference.material.name + "]";
-            #endif
 
-            TMP_SubMesh subMesh = go.AddComponent<TMP_SubMesh>();
             subMesh.m_TextComponent = textComponent;
             subMesh.m_fontAsset = materialReference.fontAsset;
             subMesh.m_spriteAsset = materialReference.spriteAsset;
@@ -268,12 +266,12 @@ namespace TMPro
             if (!m_isRegisteredForEvents)
             {
                 #if UNITY_EDITOR
-                TextEventManager.MATERIAL_PROPERTY_EVENT.Add(ON_MATERIAL_PROPERTY_CHANGED);
-                TextEventManager.FONT_PROPERTY_EVENT.Add(ON_FONT_PROPERTY_CHANGED);
+                TMPro_EventManager.MATERIAL_PROPERTY_EVENT.Add(ON_MATERIAL_PROPERTY_CHANGED);
+                TMPro_EventManager.FONT_PROPERTY_EVENT.Add(ON_FONT_PROPERTY_CHANGED);
                 //TMPro_EventManager.TEXTMESHPRO_PROPERTY_EVENT.Add(ON_TEXTMESHPRO_PROPERTY_CHANGED);
-                TextEventManager.DRAG_AND_DROP_MATERIAL_EVENT.Add(ON_DRAG_AND_DROP_MATERIAL);
+                TMPro_EventManager.DRAG_AND_DROP_MATERIAL_EVENT.Add(ON_DRAG_AND_DROP_MATERIAL);
                 //TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Add(ON_TEXT_STYLE_CHANGED);
-                TextEventManager.SPRITE_ASSET_PROPERTY_EVENT.Add(ON_SPRITE_ASSET_PROPERTY_CHANGED);
+                TMPro_EventManager.SPRITE_ASSET_PROPERTY_EVENT.Add(ON_SPRITE_ASSET_PROPERTY_CHANGED);
                 //TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Add(ON_TMP_SETTINGS_CHANGED);
                 #endif
 
@@ -323,12 +321,12 @@ namespace TMPro
 
             #if UNITY_EDITOR
             // Unregister the event this object was listening to
-            TextEventManager.MATERIAL_PROPERTY_EVENT.Remove(ON_MATERIAL_PROPERTY_CHANGED);
-            TextEventManager.FONT_PROPERTY_EVENT.Remove(ON_FONT_PROPERTY_CHANGED);
+            TMPro_EventManager.MATERIAL_PROPERTY_EVENT.Remove(ON_MATERIAL_PROPERTY_CHANGED);
+            TMPro_EventManager.FONT_PROPERTY_EVENT.Remove(ON_FONT_PROPERTY_CHANGED);
             //TMPro_EventManager.TEXTMESHPRO_PROPERTY_EVENT.Remove(ON_TEXTMESHPRO_PROPERTY_CHANGED);
-            TextEventManager.DRAG_AND_DROP_MATERIAL_EVENT.Remove(ON_DRAG_AND_DROP_MATERIAL);
+            TMPro_EventManager.DRAG_AND_DROP_MATERIAL_EVENT.Remove(ON_DRAG_AND_DROP_MATERIAL);
             //TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Remove(ON_TEXT_STYLE_CHANGED);
-            TextEventManager.SPRITE_ASSET_PROPERTY_EVENT.Remove(ON_SPRITE_ASSET_PROPERTY_CHANGED);
+            TMPro_EventManager.SPRITE_ASSET_PROPERTY_EVENT.Remove(ON_SPRITE_ASSET_PROPERTY_CHANGED);
             //TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Remove(ON_TMP_SETTINGS_CHANGED);
             #endif
             m_isRegisteredForEvents = false;
@@ -428,7 +426,7 @@ namespace TMPro
         // Event received when font asset properties are changed in Font Inspector
         void ON_FONT_PROPERTY_CHANGED(bool isChanged, Object fontAsset)
         {
-            if (m_fontAsset != null && fontAsset != null && fontAsset.GetInstanceID() == m_fontAsset.GetInstanceID())
+            if (m_fontAsset != null && fontAsset.GetInstanceID() == m_fontAsset.GetInstanceID())
             {
                 // Copy Normal and Bold Weight
                 if (m_fallbackMaterial != null)
@@ -601,7 +599,7 @@ namespace TMPro
             m_renderer.sharedMaterial = m_sharedMaterial;
 
             // Special handling to keep the Culling of the material in sync with parent text object
-            if (m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode) && textComponent.fontSharedMaterial != null)
+            if (m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode))
             {
                 float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
                 m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);

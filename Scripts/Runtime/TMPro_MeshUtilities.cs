@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.TextCore.Text;
+using UnityEngine.TextCore;
 using System;
 
 
@@ -135,8 +135,6 @@ namespace TMPro
 
             for (int i = 0; i < length; i++)
                 linkID[i] = text[startIndex + i];
-
-            linkIdLength = length;
         }
 
         /// <summary>
@@ -155,14 +153,6 @@ namespace TMPro
             return text;
         }
 
-        /// <summary>
-        /// Function which returns the link as a string.
-        /// </summary>
-        /// <returns></returns>
-        public string GetLink()
-        {
-            return GetLinkID();
-        }
 
         /// <summary>
         /// Function which returns the link ID as a string.
@@ -175,6 +165,8 @@ namespace TMPro
                 return string.Empty;
 
             return new string(linkID, 0, linkIdLength);
+            //return textComponent.text.Substring(linkIdFirstCharacterIndex, linkIdLength);
+
         }
     }
 
@@ -272,8 +264,8 @@ namespace TMPro
     // internal struct TMP_TextProcessingState
     // {
     //         // Multi Font & Material support related
-    //         public FontAsset CurrentFontAsset;
-    //         public SpriteAsset CurrentSpriteAsset;
+    //         public TMP_FontAsset CurrentFontAsset;
+    //         public TMP_SpriteAsset CurrentSpriteAsset;
     //         public Material CurrentMaterial;
     //         public int CurrentMaterialIndex;
     //
@@ -351,12 +343,11 @@ namespace TMPro
 
 
     // Structure used for Word Wrapping which tracks the state of execution when the last space or carriage return character was encountered.
-    internal struct WordWrapState
+    public struct WordWrapState
     {
         public int previous_WordBreak;
         public int total_CharacterCount;
         public int visible_CharacterCount;
-        public int visibleSpaceCount;
         public int visible_SpriteCount;
         public int visible_LinkCount;
         public int firstCharacterIndex;
@@ -380,9 +371,7 @@ namespace TMPro
         public float xAdvance;
         public float preferredWidth;
         public float preferredHeight;
-        public float renderedWidth;
-        public float renderedHeight;
-
+        //public float maxFontScale;
         public float previousLineScale;
 
         public int wordCount;
@@ -394,7 +383,7 @@ namespace TMPro
         public float baselineOffset;
         public float lineOffset;
         public bool isDrivenLineSpacing;
-        public int lastBaseGlyphIndex;
+        public float glyphHorizontalAdvanceAdjustment;
 
         public float cSpace;
         public float mSpace;
@@ -405,7 +394,7 @@ namespace TMPro
         public Color32 vertexColor;
         public Color32 underlineColor;
         public Color32 strikethroughColor;
-        public HighlightState highlightState;
+        public Color32 highlightColor;
         public TMP_FontStyleStack basicStyleStack;
         public TMP_TextProcessingStack<int> italicAngleStack;
         public TMP_TextProcessingStack<Color32> colorStack;
@@ -413,7 +402,7 @@ namespace TMPro
         public TMP_TextProcessingStack<Color32> strikethroughColorStack;
         public TMP_TextProcessingStack<Color32> highlightColorStack;
         public TMP_TextProcessingStack<HighlightState> highlightStateStack;
-        public TMP_TextProcessingStack<TextColorGradient> colorGradientStack;
+        public TMP_TextProcessingStack<TMP_ColorGradient> colorGradientStack;
         public TMP_TextProcessingStack<float> sizeStack;
         public TMP_TextProcessingStack<float> indentStack;
         public TMP_TextProcessingStack<FontWeight> fontWeightStack;
@@ -424,8 +413,8 @@ namespace TMPro
         public TMP_TextProcessingStack<HorizontalAlignmentOptions> lineJustificationStack;
         public int spriteAnimationID;
 
-        public FontAsset currentFontAsset;
-        public SpriteAsset currentSpriteAsset;
+        public TMP_FontAsset currentFontAsset;
+        public TMP_SpriteAsset currentSpriteAsset;
         public Material currentMaterial;
         public int currentMaterialIndex;
 
@@ -433,23 +422,21 @@ namespace TMPro
 
         public bool tagNoParsing;
         public bool isNonBreakingSpace;
-
-        public Quaternion fxRotation;
-        public Vector3 fxScale;
     }
 
 
     /// <summary>
     /// Structure used to store retrieve the name and hashcode of the font and material
     /// </summary>
-    internal struct TagAttribute
+    public struct TagAttribute
     {
         public int startIndex;
         public int length;
         public int hashCode;
     }
 
-    internal struct RichTextTagAttribute
+
+    public struct RichTextTagAttribute
     {
         public int nameHashCode;
         public int valueHashCode;

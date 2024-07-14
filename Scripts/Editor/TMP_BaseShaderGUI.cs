@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.TextCore.Text;
 using UnityEditor;
-
 
 namespace TMPro.EditorUtilities
 {
@@ -129,7 +127,6 @@ namespace TMPro.EditorUtilities
         protected MaterialEditor m_Editor;
 
         protected Material m_Material;
-        private int m_ShaderID;
 
         protected MaterialProperty[] m_Properties;
 
@@ -144,7 +141,7 @@ namespace TMPro.EditorUtilities
             {
                 // There's been at least one undo/redo since the last time this GUI got constructed.
                 // Maybe the undo/redo was for this material? Assume that is was.
-                TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
+                TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material as Material);
             }
 
             s_LastSeenUndoRedoCount = s_UndoRedoCount;
@@ -157,24 +154,19 @@ namespace TMPro.EditorUtilities
             this.m_Properties = properties;
 
             if (m_IsNewGUI)
+            {
                 PrepareGUI();
+            }
 
             DoDragAndDropBegin();
             EditorGUI.BeginChangeCheck();
             DoGUI();
             if (EditorGUI.EndChangeCheck())
             {
-                TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
+                TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
             }
 
             DoDragAndDropEnd();
-        }
-
-        public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
-        {
-            base.AssignNewShaderToMaterial(material, oldShader, newShader);
-
-            TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, material);
         }
 
         /// <summary>Override this method to create the specific shader GUI.</summary>
@@ -293,7 +285,7 @@ namespace TMPro.EditorUtilities
         void DoTexture(string name, string label, System.Type type, bool withTilingOffset = false, string[] speedNames = null)
         {
             float objFieldSize = 60f;
-            bool smallLayout = EditorGUIUtility.currentViewWidth <= 330f && (withTilingOffset || speedNames != null);
+            bool smallLayout = EditorGUIUtility.currentViewWidth <= 440f && (withTilingOffset || speedNames != null);
             float controlHeight = smallLayout ? objFieldSize * 2 : objFieldSize;
 
             MaterialProperty property = FindProperty(name, m_Properties);
@@ -339,7 +331,7 @@ namespace TMPro.EditorUtilities
             float labelWidth = EditorGUIUtility.labelWidth;
             int indentLevel = EditorGUI.indentLevel;
             EditorGUI.indentLevel = 0;
-            EditorGUIUtility.labelWidth = Mathf.Min(40f, rect.width * 0.40f);
+            EditorGUIUtility.labelWidth = Mathf.Min(37f, rect.width * 0.40f);
 
             Vector4 vector = property.textureScaleAndOffset;
 
@@ -389,7 +381,7 @@ namespace TMPro.EditorUtilities
             float labelWidth = EditorGUIUtility.labelWidth;
             int indentLevel = EditorGUI.indentLevel;
             EditorGUI.indentLevel = 0;
-            EditorGUIUtility.labelWidth = Mathf.Min(40f, rect.width * 0.40f);
+            EditorGUIUtility.labelWidth = Mathf.Min(37f, rect.width * 0.40f);
 
             s_TempLabel.text = "Speed";
             rect = EditorGUI.PrefixLabel(rect, s_TempLabel);
@@ -472,17 +464,6 @@ namespace TMPro.EditorUtilities
             }
         }
 
-        protected void DoOffset(string name, string label)
-        {
-            MaterialProperty property = BeginProperty(name);
-            s_TempLabel.text = label;
-            Vector2 value = EditorGUI.Vector2Field(EditorGUILayout.GetControlRect(), s_TempLabel, property.vectorValue);
-            if (EndProperty())
-            {
-                property.vectorValue = value;
-            }
-        }
-
         protected void DoSlider(string name, string label)
         {
             MaterialProperty property = BeginProperty(name);
@@ -495,50 +476,10 @@ namespace TMPro.EditorUtilities
             }
         }
 
-        protected void DoSlider(string name, Vector2 range, string label)
-        {
-            MaterialProperty property = BeginProperty(name);
-            s_TempLabel.text = label;
-            float value = EditorGUI.Slider(EditorGUILayout.GetControlRect(), s_TempLabel, property.floatValue, range.x, range.y);
-            if (EndProperty())
-            {
-                property.floatValue = value;
-            }
-        }
-
         protected void DoSlider(string propertyName, string propertyField, string label)
         {
             MaterialProperty property = BeginProperty(propertyName);
             Vector2 range = property.rangeLimits;
-            s_TempLabel.text = label;
-
-            Vector4 value = property.vectorValue;
-
-            switch (propertyField)
-            {
-                case "X":
-                    value.x = EditorGUI.Slider(EditorGUILayout.GetControlRect(), s_TempLabel, value.x, range.x, range.y);
-                    break;
-                case "Y":
-                    value.y = EditorGUI.Slider(EditorGUILayout.GetControlRect(), s_TempLabel, value.y, range.x, range.y);
-                    break;
-                case "Z":
-                    value.z = EditorGUI.Slider(EditorGUILayout.GetControlRect(), s_TempLabel, value.z, range.x, range.y);
-                    break;
-                case "W":
-                    value.w = EditorGUI.Slider(EditorGUILayout.GetControlRect(), s_TempLabel, value.w, range.x, range.y);
-                    break;
-            }
-
-            if (EndProperty())
-            {
-                property.vectorValue = value;
-            }
-        }
-
-        protected void DoSlider(string propertyName, string propertyField, Vector2 range, string label)
-        {
-            MaterialProperty property = BeginProperty(propertyName);
             s_TempLabel.text = label;
 
             Vector4 value = property.vectorValue;
@@ -613,21 +554,6 @@ namespace TMPro.EditorUtilities
             }
         }
 
-        bool IsNewShader()
-        {
-            if (m_Material == null)
-                return false;
-
-            int currentShaderID = m_Material.shader.GetInstanceID();
-
-            if (m_ShaderID == currentShaderID)
-                return false;
-
-            m_ShaderID = currentShaderID;
-
-            return true;
-        }
-
         void DoDragAndDropBegin()
         {
             m_DragAndDropMinY = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true)).y;
@@ -637,13 +563,15 @@ namespace TMPro.EditorUtilities
         {
             Rect rect = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
             Event evt = Event.current;
-
             if (evt.type == EventType.DragUpdated)
             {
                 DragAndDrop.visualMode = DragAndDropVisualMode.Generic;
                 evt.Use();
             }
-            else if (evt.type == EventType.DragPerform && Rect.MinMaxRect(rect.xMin, m_DragAndDropMinY, rect.xMax, rect.yMax).Contains(evt.mousePosition))
+            else if (
+                evt.type == EventType.DragPerform &&
+                Rect.MinMaxRect(rect.xMin, m_DragAndDropMinY, rect.xMax, rect.yMax).Contains(evt.mousePosition)
+            )
             {
                 DragAndDrop.AcceptDrag();
                 evt.Use();
@@ -652,11 +580,6 @@ namespace TMPro.EditorUtilities
                 {
                     PerformDrop(droppedMaterial);
                 }
-            }
-            else if (evt.type == EventType.DragExited)
-            {
-                if (IsNewShader())
-                    TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
             }
         }
 
@@ -669,7 +592,7 @@ namespace TMPro.EditorUtilities
             }
 
             Texture currentTex = m_Material.GetTexture(ShaderUtilities.ID_MainTex);
-            FontAsset requiredFontAsset = null;
+            TMP_FontAsset requiredFontAsset = null;
             if (droppedTex != currentTex)
             {
                 requiredFontAsset = TMP_EditorUtility.FindMatchingFontAsset(droppedMaterial);
@@ -691,7 +614,7 @@ namespace TMPro.EditorUtilities
                     }
                 }
 
-                TextEventManager.ON_DRAG_AND_DROP_MATERIAL_CHANGED(o, m_Material, droppedMaterial);
+                TMPro_EventManager.ON_DRAG_AND_DROP_MATERIAL_CHANGED(o, m_Material, droppedMaterial);
                 EditorUtility.SetDirty(o);
             }
         }
