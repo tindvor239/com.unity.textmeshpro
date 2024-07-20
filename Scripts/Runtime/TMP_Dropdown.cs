@@ -1096,7 +1096,7 @@ namespace TMPro
 
             if (item.toggle != null)
             {
-                item.toggle.isOn = selected;
+                item.toggle.isOn = false;
             }
 
             // Set the item's data
