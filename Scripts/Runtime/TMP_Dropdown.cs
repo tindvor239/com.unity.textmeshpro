@@ -815,7 +815,7 @@ namespace TMPro
                 if (item == null)
                     continue;
 
-                SetupToggle(item.toggle, i);
+                SetupToggle(item.toggle);
 
                 // Automatically set up explicit navigation
                 if (prev != null)
