@@ -815,7 +815,7 @@ namespace TMPro
                 if (item == null)
                     continue;
 
-                SetupToggle(item.toggle);
+                SetupToggle(item.toggle, i);
 
                 // Automatically set up explicit navigation
                 if (prev != null)
@@ -1096,7 +1096,7 @@ namespace TMPro
 
             if (item.toggle != null)
             {
-                item.toggle.isOn = false;
+                item.toggle.isOn = selected;
             }
 
             // Set the item's data
