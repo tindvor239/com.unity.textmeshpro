@@ -395,7 +395,7 @@ namespace TMPro
         /// }
         /// </code>
         /// </example>
-        public int value
+        public virtual int value
         {
             get
             {
