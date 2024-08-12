@@ -180,7 +180,7 @@ namespace TMPro
         [Space]
 
         [SerializeField]
-        private int m_Value;
+        protected int m_Value;
 
         [Space]
 
